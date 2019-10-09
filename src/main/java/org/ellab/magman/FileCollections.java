@@ -69,6 +69,22 @@ public class FileCollections {
         public Set<FileItem> files() {
             return files;
         }
+
+        public String toStringPretty() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(this).append("\n[\n");
+            sb.append("name=").append(name).append("\n");
+            sb.append("path=").append(path).append("\n");
+            groupMap.entrySet().forEach(g -> {
+                g.getValue().entrySet().forEach(e -> {
+                    sb.append("  type=").append(e.getKey()).append("\n");
+                    e.getValue().forEach(v -> sb.append("    ").append(v).append("\n"));
+                });
+            });
+            sb.append("]\n");
+
+            return sb.toString();
+        }
     }
 
     private Map<String, MagazineCollection> map = new TreeMap<>(new Comparator<String>() {
