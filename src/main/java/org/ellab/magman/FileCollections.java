@@ -62,6 +62,10 @@ public class FileCollections {
             return groupMap.keySet();
         }
 
+        public Map<FileItem.Type, TreeSet<FileItem>> group(String group) {
+            return groupMap.get(group);
+        }
+
         public Set<FileItem> group(String group, FileItem.Type type) {
             return groupMap.get(group).get(type);
         }

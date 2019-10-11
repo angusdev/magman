@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -55,9 +56,9 @@ import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
-import org.eclipse.wb.swt.SWTResourceManager;
 import org.ellab.magman.FileCollections.MagazineCollection;
 import org.ellab.magman.FileItem.Problem;
+import org.ellab.magman.FileItem.Type;
 
 public class SwtMain {
     private Display display;
@@ -118,6 +119,13 @@ public class SwtMain {
     int currProgressDirIndex;
     int currProgressCurrDirFileIndex;
     int currProgressCurrDirFileTotal;
+    private Composite compositeDrop;
+    private Label lblDropRename;
+    private DropTarget dropRename;
+
+    public FileCollections getFileCollections() {
+        return fc;
+    }
 
     public static void main(String[] args) {
         SwtMain main = new SwtMain(args);
@@ -128,6 +136,7 @@ public class SwtMain {
         init();
         addEventHandler();
         addDropTarget();
+        addDropRename();
 
         if (args.length > 0) {
             txtDirectory.setText(args[0]);
@@ -295,10 +304,19 @@ public class SwtMain {
         trclmnStatus.setText("Status");
 
         txtMessage = new Text(shell, SWT.BORDER | SWT.READ_ONLY | SWT.H_SCROLL | SWT.V_SCROLL | SWT.CANCEL | SWT.MULTI);
-        txtMessage.setBackground(SWTResourceManager.getColor(SWT.COLOR_LIST_BACKGROUND));
-        GridData gd_txtMessage = new GridData(SWT.FILL, SWT.FILL, true, false, 5, 1);
+        txtMessage.setBackground(Display.getCurrent().getSystemColor(SWT.COLOR_LIST_BACKGROUND));
+        GridData gd_txtMessage = new GridData(SWT.FILL, SWT.FILL, true, false, 2, 1);
         gd_txtMessage.heightHint = 100;
         txtMessage.setLayoutData(gd_txtMessage);
+
+        compositeDrop = new Composite(shell, SWT.NONE);
+        compositeDrop.setLayout(new FillLayout(SWT.VERTICAL));
+        compositeDrop.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false, 3, 1));
+
+        lblDropRename = new Label(compositeDrop, SWT.BORDER);
+        lblDropRename.setText("Rename");
+
+        dropRename = new DropTarget(lblDropRename, DND.DROP_COPY | DND.DROP_DEFAULT);
 
         compositeStatusbar = new Composite(shell, SWT.NONE);
         GridLayout gl_compositeStatusbar = new GridLayout(2, false);
@@ -466,54 +484,8 @@ public class SwtMain {
         Transfer[] types = new Transfer[] { fileTransfer };
         target.setTransfer(types);
 
-        target.addDropListener(new DropTargetListener() {
-            public void dragEnter(DropTargetEvent event) {
-                if (event.detail == DND.DROP_DEFAULT) {
-                    if ((event.operations & DND.DROP_COPY) != 0) {
-                        event.detail = DND.DROP_COPY;
-                    }
-                    else {
-                        event.detail = DND.DROP_NONE;
-                    }
-                }
-                for (int i = 0; i < event.dataTypes.length; i++) {
-                    if (fileTransfer.isSupportedType(event.dataTypes[i])) {
-                        event.currentDataType = event.dataTypes[i];
-                        // files should only be copied
-                        if (event.detail != DND.DROP_COPY) {
-                            event.detail = DND.DROP_NONE;
-                        }
-                        break;
-                    }
-                }
-            }
-
-            public void dragOver(DropTargetEvent event) {
-                event.feedback = DND.FEEDBACK_SELECT | DND.FEEDBACK_SCROLL;
-            }
-
-            public void dragOperationChanged(DropTargetEvent event) {
-                if (event.detail == DND.DROP_DEFAULT) {
-                    if ((event.operations & DND.DROP_COPY) != 0) {
-                        event.detail = DND.DROP_COPY;
-                    }
-                    else {
-                        event.detail = DND.DROP_NONE;
-                    }
-                }
-                if (fileTransfer.isSupportedType(event.currentDataType)) {
-                    if (event.detail != DND.DROP_COPY) {
-                        event.detail = DND.DROP_NONE;
-                    }
-                }
-            }
-
-            public void dragLeave(DropTargetEvent event) {
-            }
-
-            public void dropAccept(DropTargetEvent event) {
-            }
-
+        DropTargetListener dropListener = (new BaseDropTargetHandler(fileTransfer, this) {
+            @Override
             public void drop(DropTargetEvent event) {
                 if (fileTransfer.isSupportedType(event.currentDataType)) {
                     Arrays.stream((String[]) event.data).forEach(f -> {
@@ -546,6 +518,79 @@ public class SwtMain {
                 }
             }
         });
+        target.addDropListener(dropListener);
+    }
+
+    private void addDropRename() {
+        final FileTransfer fileTransfer = FileTransfer.getInstance();
+        Transfer[] types = new Transfer[] { fileTransfer };
+        dropRename.setTransfer(types);
+
+        DropTargetListener dropListener = (new BaseDropTargetHandler(fileTransfer, this) {
+            @Override
+            public void drop(DropTargetEvent event) {
+                if (fileTransfer.isSupportedType(event.currentDataType)) {
+                    List<String[]> renameList = new ArrayList<>();
+                    Arrays.stream((String[]) event.data).forEach(f -> {
+                        final String oriName = new File(f).getName();
+                        final String ext = oriName.lastIndexOf('.') > 0
+                                ? oriName.substring(oriName.lastIndexOf('.') + 1, oriName.length()).toLowerCase()
+                                : null;
+                        String name = oriName.replaceFirst("[.][^.]+$", "");
+                        name = name.replaceAll("[\\.\\_\\-]", " ").replaceAll("\\s\\s+", " ");
+                        final String searchName = name;
+                        String renameTo = null;
+
+                        // Match the collection
+                        final MagazineCollection mag = fc.items().stream()
+                                .filter(mc -> mc.getName().length() > 0 && searchName.startsWith(mc.getName() + " "))
+                                .reduce(null,
+                                        (a, b) -> a == null || b.getName().length() > a.getName().length() ? b : a);
+
+                        // Find the longest matched group (region)
+                        if (mag != null) {
+                            final String group = mag.groups().stream().reduce(null, (a, b) -> {
+                                String m = mag.getName() + ((a != null && a.length() > 0) ? (" " + a) : "");
+                                if (searchName.startsWith(m + " ")) {
+                                    return a == null || b.length() > a.length() ? b : a;
+                                }
+                                else {
+                                    return a;
+                                }
+                            });
+
+                            // Get the most frequent type
+                            // note: group can't be null as it matched before
+                            final Type type = mag.group(group).keySet().stream()
+                                    .reduce((a, b) -> a.ordinal() < b.ordinal() ? a : b).get();
+
+                            String prefix = mag.getName() + (group.length() > 0 ? (" " + group) : "") + " ";
+                            if (name.startsWith(prefix)) {
+                                // should always matches
+                                final String suffix = name.substring(prefix.length()).toUpperCase();
+                                String guessedName = Utils.guessDateFromFilename(suffix, type);
+                                if (!guessedName.equals(suffix)) {
+                                    renameTo = prefix + guessedName + "." + ext;
+                                }
+                            }
+
+                            renameList.add(new String[] { mag.getName(), oriName, renameTo });
+                        }
+                        else {
+                            renameList.add(new String[] { null, oriName, null });
+                        }
+                    });
+
+                    new RenameDialog(shell,
+                            SWT.APPLICATION_MODAL | SWT.TITLE | SWT.RESIZE | SWT.CLOSE | SWT.MAX | SWT.MIN)
+                                    .open(renameList);
+
+                }
+            }
+        });
+
+        dropRename.addDropListener(dropListener);
+
     }
 
     private void log(String s) {
