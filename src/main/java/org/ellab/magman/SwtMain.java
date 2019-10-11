@@ -581,7 +581,7 @@ public class SwtMain {
                         }
                     });
 
-                    new RenameDialog(shell,
+                    new FileOperationDialog(shell,
                             SWT.APPLICATION_MODAL | SWT.TITLE | SWT.RESIZE | SWT.CLOSE | SWT.MAX | SWT.MIN)
                                     .open(renameList);
 

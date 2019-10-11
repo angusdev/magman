@@ -17,13 +17,13 @@ import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 
-public class RenameDialog extends Dialog {
+public class FileOperationDialog extends Dialog {
 
     protected Object result;
     protected Shell shlMagmanRename;
     private Table table;
 
-    public RenameDialog(Shell parent, int style) {
+    public FileOperationDialog(Shell parent, int style) {
         super(parent, style);
     }
 
@@ -44,7 +44,7 @@ public class RenameDialog extends Dialog {
     private void createContents() {
         shlMagmanRename = new Shell(getParent(), getStyle());
         shlMagmanRename.setSize(450, 300);
-        shlMagmanRename.setText("Magman - Rename");
+        shlMagmanRename.setText("Magman");
         shlMagmanRename.setLayout(new GridLayout(1, false));
 
         table = new Table(shlMagmanRename, SWT.BORDER | SWT.CHECK | SWT.FULL_SELECTION);
