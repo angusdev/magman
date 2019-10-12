@@ -10,18 +10,48 @@ public class Utils {
     private static final String[] MONTH_NAME = new String[] { "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
             "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER" };
 
-    public static boolean isValidYYYYMMDD(String s) {
+    public static boolean isValidYYYYMMDD(final String s) {
         if (!s.matches("^\\d{8}$")) {
             return false;
         }
 
-        DateFormat df = new SimpleDateFormat("yyyymmdd");
+        final DateFormat df = new SimpleDateFormat("yyyymmdd");
         try {
             return s.equals(df.format(df.parse(s)));
         }
         catch (ParseException ex) {
             return false;
         }
+    }
+
+    private static int[] indexOfWord(final String str, final String match) {
+        final int pos = str.indexOf(match + " ");
+        if (pos >= 0) {
+            return new int[] { pos, pos + match.length() };
+        }
+
+        if (str.endsWith(match)) {
+            return new int[] { str.length() - match.length(), str.length() };
+        }
+
+        return null;
+    }
+
+    // check if the file name matches with the magazine name
+    // e.g. Java Official = Java Official 2019 July.pdf
+    // also Java Official = Official Java 2019 July.pdf
+    public static int[] fuzzyIndexOf(final String str, final String match) {
+        int[] result = indexOfWord(str, match);
+        if (result != null) {
+            return result;
+        }
+
+        final String[] splited = match.split(" ");
+        if (splited.length != 2) {
+            return null;
+        }
+
+        return indexOfWord(str, splited[1] + " " + splited[0]);
     }
 
     public static String guessDateFromFilename(final String name, final FileItem.Type type) {

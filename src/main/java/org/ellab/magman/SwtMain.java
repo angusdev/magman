@@ -147,7 +147,7 @@ public class SwtMain {
         display = new Display();
         shell = new Shell(display, SWT.SHELL_TRIM);
         shell.setImage(new Image(display, SwtMain.class.getResourceAsStream("/magman.ico")));
-        shell.setSize(750, 600);
+        shell.setSize(950, 600);
         shell.setText("MagMan");
         shell.setLayout(new GridLayout(5, false));
 
@@ -530,28 +530,35 @@ public class SwtMain {
             @Override
             public void drop(DropTargetEvent event) {
                 if (fileTransfer.isSupportedType(event.currentDataType)) {
-                    List<String[]> renameList = new ArrayList<>();
-                    Arrays.stream((String[]) event.data).forEach(f -> {
-                        final String oriName = new File(f).getName();
+                    List<FileOperationDialog.Item> renameList = new ArrayList<>();
+                    Arrays.stream((String[]) event.data).forEach(file -> {
+                        FileOperationDialog.Item renameItem = null;
+                        String renameTo = null;
+
+                        // extract the file name and extension by regexp
+                        final String oriName = new File(file).getName();
                         final String ext = oriName.lastIndexOf('.') > 0
                                 ? oriName.substring(oriName.lastIndexOf('.') + 1, oriName.length()).toLowerCase()
                                 : null;
                         String name = oriName.replaceFirst("[.][^.]+$", "");
-                        name = name.replaceAll("[\\.\\_\\-]", " ").replaceAll("\\s\\s+", " ");
-                        final String searchName = name;
-                        String renameTo = null;
+                        name = name.replaceAll("[\\.\\-+=_]", " ").replaceAll("\\s\\s+", " ");
+                        name = name.toUpperCase();
 
-                        // Match the collection
+                        final String searchName = name;
+
+                        // match the collection
                         final MagazineCollection mag = fc.items().stream()
-                                .filter(mc -> mc.getName().length() > 0 && searchName.startsWith(mc.getName() + " "))
+                                .filter(mc -> mc.getName().length() > 0
+                                        && Utils.fuzzyIndexOf(searchName, mc.getName().toUpperCase()) != null)
                                 .reduce(null,
                                         (a, b) -> a == null || b.getName().length() > a.getName().length() ? b : a);
 
-                        // Find the longest matched group (region)
+                        // find the longest matched group (region)
                         if (mag != null) {
                             final String group = mag.groups().stream().reduce(null, (a, b) -> {
-                                String m = mag.getName() + ((a != null && a.length() > 0) ? (" " + a) : "");
-                                if (searchName.startsWith(m + " ")) {
+                                String m = mag.getName().toUpperCase()
+                                        + ((a != null && a.length() > 0) ? (" " + a) : "");
+                                if (Utils.fuzzyIndexOf(searchName, m) != null) {
                                     return a == null || b.length() > a.length() ? b : a;
                                 }
                                 else {
@@ -559,32 +566,37 @@ public class SwtMain {
                                 }
                             });
 
-                            // Get the most frequent type
+                            // get the most frequent type
                             // note: group can't be null as it matched before
                             final Type type = mag.group(group).keySet().stream()
                                     .reduce((a, b) -> a.ordinal() < b.ordinal() ? a : b).get();
 
-                            String prefix = mag.getName() + (group.length() > 0 ? (" " + group) : "") + " ";
-                            if (name.startsWith(prefix)) {
-                                // should always matches
-                                final String suffix = name.substring(prefix.length()).toUpperCase();
-                                String guessedName = Utils.guessDateFromFilename(suffix, type);
-                                if (!guessedName.equals(suffix)) {
-                                    renameTo = prefix + guessedName + "." + ext;
-                                }
+                            final String prefix = mag.getName() + (group.length() > 0 ? (" " + group) : "");
+
+                            // remove the magazine name from the file name
+                            int[] pos = Utils.fuzzyIndexOf(name, prefix.toUpperCase());
+                            // pos must be non-null
+                            final String remainedName = name.substring(0, pos[0])
+                                    + name.substring(pos[1], name.length()).trim();
+
+                            final String guessedName = Utils.guessDateFromFilename(remainedName, type);
+                            if (!guessedName.equals(remainedName)) {
+                                renameTo = prefix + " " + guessedName + "." + ext;
                             }
 
-                            renameList.add(new String[] { mag.getName(), oriName, renameTo });
+                            renameItem = new FileOperationDialog.Item(file, oriName, mag, renameTo);
                         }
-                        else {
-                            renameList.add(new String[] { null, oriName, null });
+
+                        if (renameItem == null) {
+                            renameItem = new FileOperationDialog.Item(file, oriName, null, null);
                         }
+
+                        renameList.add(renameItem);
                     });
 
                     new FileOperationDialog(shell,
                             SWT.APPLICATION_MODAL | SWT.TITLE | SWT.RESIZE | SWT.CLOSE | SWT.MAX | SWT.MIN)
                                     .open(renameList);
-
                 }
             }
         });
@@ -652,6 +664,9 @@ public class SwtMain {
         Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                if (!dir.equals(path) && !dir.endsWith("PlayStation Official")) {
+                    return FileVisitResult.SKIP_SUBTREE;
+                }
                 if (dir.getNameCount() == rootNameCount + 1) {
                     ++currProgressDirIndex;
                     log(currProgressDirIndex + " " + dir);

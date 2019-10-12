@@ -60,7 +60,40 @@ class UtilsTest {
         assertEquals("201910", Utils.guessDateFromFilename("2019 October", FileItem.Type.Monthly));
         assertEquals("201910", Utils.guessDateFromFilename("11 Oct 2019", FileItem.Type.Monthly));
         assertEquals("201910", Utils.guessDateFromFilename("11 October 2019", FileItem.Type.Monthly));
-        
+    }
+
+    private String helperTestFuzzyIndexOf(String str, String match) {
+        int[] pos = Utils.fuzzyIndexOf(str, match);
+        if (pos == null) {
+            return null;
+        }
+        else {
+            return str.substring(pos[0], pos[1]);
+        }
+    }
+
+    @Test
+    public void testFuzzyIndexOf() {
+        assertNull(helperTestFuzzyIndexOf("abcd", "abc"));
+        assertNull(helperTestFuzzyIndexOf("abc", "abcd"));
+
+        assertEquals("abc", helperTestFuzzyIndexOf("abc", "abc"));
+        assertEquals("abc", helperTestFuzzyIndexOf("x abc", "abc"));
+        assertEquals("abc", helperTestFuzzyIndexOf("abc y", "abc"));
+        assertEquals("abc", helperTestFuzzyIndexOf("x abc y", "abc"));
+
+        assertEquals("abc", helperTestFuzzyIndexOf("abc def", "abc"));
+        assertEquals("def", helperTestFuzzyIndexOf("abc def", "def"));
+        assertEquals("abc def", helperTestFuzzyIndexOf("abc def", "abc def"));
+        assertEquals("abc def", helperTestFuzzyIndexOf("x abc def", "abc def"));
+        assertEquals("abc def", helperTestFuzzyIndexOf("abc def y", "abc def"));
+        assertEquals("abc def", helperTestFuzzyIndexOf("x abc def y", "abc def"));
+        assertEquals("abc def", helperTestFuzzyIndexOf("abc def", "def abc"));
+        assertEquals("abc def", helperTestFuzzyIndexOf("x abc def", "def abc"));
+        assertEquals("abc def", helperTestFuzzyIndexOf("abc def y", "def abc"));
+        assertEquals("abc def", helperTestFuzzyIndexOf("x abc def y", "def abc"));
+
+        assertNull(helperTestFuzzyIndexOf("abc def ghi", "abc ghi def"));
     }
 
 }
