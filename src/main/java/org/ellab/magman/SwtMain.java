@@ -122,6 +122,8 @@ public class SwtMain {
     private Composite compositeDrop;
     private Label lblDropRename;
     private DropTarget dropRename;
+    private Label lblIncludeDir;
+    private Text txtIncludeDir;
 
     public FileCollections getFileCollections() {
         return fc;
@@ -141,6 +143,10 @@ public class SwtMain {
         if (args.length > 0) {
             txtDirectory.setText(args[0]);
         }
+
+        if (args.length > 1) {
+            txtIncludeDir.setText(args[1]);
+        }
     }
 
     private void init() {
@@ -159,15 +165,25 @@ public class SwtMain {
         txtDirectory.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
 
         btnGoDirectory = new Button(shell, SWT.NONE);
+        btnGoDirectory.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false, 1, 2));
         btnGoDirectory.setEnabled(false);
         btnGoDirectory.setText("&Go");
 
         btnUpDirectory = new Button(shell, SWT.NONE);
+        btnUpDirectory.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false, 1, 2));
         btnUpDirectory.setEnabled(false);
         btnUpDirectory.setText("Up");
 
         btnBrowse = new Button(shell, SWT.NONE);
+        btnBrowse.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false, 1, 2));
         btnBrowse.setText("&...");
+
+        lblIncludeDir = new Label(shell, SWT.NONE);
+        lblIncludeDir.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1));
+        lblIncludeDir.setText("&Includes");
+
+        txtIncludeDir = new Text(shell, SWT.BORDER);
+        txtIncludeDir.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
 
         progressBar = new ProgressBar(shell, SWT.NONE);
         progressBar.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 5, 1));
@@ -204,9 +220,9 @@ public class SwtMain {
         btnMissingIssue.setSelection(true);
         btnMissingIssue.setText("Missing (Issue)");
 
-        Label lboFilter = new Label(compositeFilter, SWT.NONE);
-        lboFilter.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1));
-        lboFilter.setText("&Filter");
+        Label lblFilter = new Label(compositeFilter, SWT.NONE);
+        lblFilter.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1));
+        lblFilter.setText("&Filter");
 
         txtFilter = new Text(compositeFilter, SWT.BORDER);
         txtFilter.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
@@ -404,6 +420,15 @@ public class SwtMain {
             }
         });
 
+        txtIncludeDir.addListener(SWT.Traverse, new Listener() {
+            @Override
+            public void handleEvent(Event e) {
+                if (e.detail == SWT.TRAVERSE_RETURN) {
+                    changeDirectory();
+                }
+            }
+        });
+
         btnGoDirectory.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
@@ -557,7 +582,7 @@ public class SwtMain {
                         if (mag != null) {
                             final String group = mag.groups().stream().reduce(null, (a, b) -> {
                                 String m = mag.getName().toUpperCase()
-                                        + ((a != null && a.length() > 0) ? (" " + a) : "");
+                                        + ((b != null && b.length() > 0) ? (" " + b) : "");
                                 if (Utils.fuzzyIndexOf(searchName, m) != null) {
                                     return a == null || b.length() > a.length() ? b : a;
                                 }
@@ -632,7 +657,9 @@ public class SwtMain {
             return;
         }
 
-        Path path = Paths.get(txtDirectory.getText());
+        final Path path = Paths.get(txtDirectory.getText());
+        final String includeDir = txtIncludeDir.getText();
+
         tree.removeAll();
         comboName.removeAll();
         fc = new FileCollections();
@@ -644,7 +671,7 @@ public class SwtMain {
                         showMessage(SWT.ERROR, "The directory does not exist");
                         return;
                     }
-                    processDirectory(path);
+                    processDirectory(path, includeDir);
                 }
                 catch (Exception ex) {
                     ex.printStackTrace();
@@ -654,9 +681,16 @@ public class SwtMain {
         }.start();
     }
 
-    private void processDirectory(final Path path) throws Exception {
+    private void processDirectory(final Path path, String includeDir) throws Exception {
+        final String finalIncludeDir = includeDir != null && includeDir.trim().length() > 0
+                ? includeDir.trim().toUpperCase()
+                : null;
+
         int rootNameCount = path.getNameCount();
-        final int totalDirCount = (int) Arrays.stream(path.toFile().listFiles()).filter(f -> f.isDirectory()).count();
+        final int totalDirCount = (int) Arrays.stream(path.toFile().listFiles())
+                .filter(f -> f.isDirectory()
+                        && (finalIncludeDir == null || f.getName().toUpperCase().indexOf(finalIncludeDir) >= 0))
+                .count();
         currProgressDirIndex = 0;
         currProgressCurrDirFileTotal = 0;
         currProgressCurrDirFileIndex = 0;
@@ -664,9 +698,11 @@ public class SwtMain {
         Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                if (!dir.equals(path) && !dir.endsWith("PlayStation Official")) {
+                if (finalIncludeDir != null && !dir.equals(path)
+                        && dir.getFileName().toString().toUpperCase().indexOf(finalIncludeDir) < 0) {
                     return FileVisitResult.SKIP_SUBTREE;
                 }
+
                 if (dir.getNameCount() == rootNameCount + 1) {
                     ++currProgressDirIndex;
                     log(currProgressDirIndex + " " + dir);
@@ -679,7 +715,12 @@ public class SwtMain {
 
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                int nameCount = file.getNameCount();
+                final int nameCount = file.getNameCount();
+
+                if (finalIncludeDir != null && nameCount == rootNameCount + 1) {
+                    // has include sub directory, skip the file in root directory (rootNameCount + 1)
+                    return FileVisitResult.CONTINUE;
+                }
 
                 if (nameCount == rootNameCount + 2) {
                     // Progress only take account into 1st level sub-directory
