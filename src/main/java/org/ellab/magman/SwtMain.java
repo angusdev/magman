@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
+import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DropTarget;
 import org.eclipse.swt.dnd.DropTargetEvent;
@@ -116,6 +117,14 @@ public class SwtMain {
     private Combo comboName;
 
     private Text txtMessage;
+
+    private CLabel lblStatTotal;
+    private CLabel lblStatD7;
+    private CLabel lblStatD30;
+    private CLabel lblStatY0;
+    private CLabel lblStatY1;
+    private CLabel lblStatY2;
+
     private Composite compositeStatusbar;
     private Label lblVersion;
     private Link linkWebsite;
@@ -125,10 +134,11 @@ public class SwtMain {
     int currProgressCurrDirFileIndex;
     int currProgressCurrDirFileTotal;
     private Composite compositeDrop;
-    private Label lblDropRename;
+    private CLabel lblDropRename;
     private DropTarget dropRename;
     private Label lblIncludeDir;
     private Text txtIncludeDir;
+    private Composite compositeStat;
 
     public FileCollections getFileCollections() {
         return fc;
@@ -364,10 +374,38 @@ public class SwtMain {
         compositeDrop.setLayout(new FillLayout(SWT.VERTICAL));
         compositeDrop.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false, 3, 1));
 
-        lblDropRename = new Label(compositeDrop, SWT.BORDER);
-        lblDropRename.setText("Rename");
+        lblDropRename = new CLabel(compositeDrop, SWT.BORDER);
+        lblDropRename.setAlignment(SWT.CENTER);
+        lblDropRename.setText("Drop files\r\nhere\r\nto rename");
 
         dropRename = new DropTarget(lblDropRename, DND.DROP_COPY | DND.DROP_DEFAULT);
+
+        compositeStat = new Composite(shell, SWT.NONE);
+        GridLayout gl_compositeStat = new GridLayout(6, false);
+        gl_compositeStat.marginWidth = 0;
+        compositeStat.setLayout(gl_compositeStat);
+        GridData gd_compositeStat = new GridData(SWT.FILL, SWT.CENTER, true, false, 5, 1);
+        gd_compositeStat.minimumWidth = 5;
+        compositeStat.setLayoutData(gd_compositeStat);
+
+        lblStatTotal = new CLabel(compositeStat, SWT.BORDER);
+        lblStatTotal.setText("Total: ");
+
+        lblStatD7 = new CLabel(compositeStat, SWT.BORDER);
+        lblStatD7.setText("7 Days: ");
+
+        lblStatD30 = new CLabel(compositeStat, SWT.BORDER);
+        lblStatD30.setText("30 Days: ");
+
+        lblStatY0 = new CLabel(compositeStat, SWT.BORDER);
+        lblStatY0.setText("          ");
+
+        lblStatY1 = new CLabel(compositeStat, SWT.BORDER);
+        lblStatY1.setText("          ");
+
+        lblStatY2 = new CLabel(compositeStat, SWT.BORDER);
+        lblStatY2.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
+        lblStatY2.setText("          ");
 
         compositeStatusbar = new Composite(shell, SWT.NONE);
         GridLayout gl_compositeStatusbar = new GridLayout(2, false);
@@ -826,6 +864,30 @@ public class SwtMain {
                         comboName.add(mc.getName());
                     }
                 });
+
+                FileItemStat fs = fc.files().getStat();
+                lblStatTotal.setText("Total: " + fs.getTotal().getFileCount() + " files, "
+                        + Utils.kmg(fc.files().getStat().getTotal().getFileSize(), true, " ", "B"));
+                lblStatTotal.pack();
+                lblStatD7.setText("7 Days: " + fs.get(7).getFileCount() + " files, "
+                        + Utils.kmg(fc.files().getStat().get(7).getFileSize(), true, " ", "B"));
+                lblStatD7.pack();
+                lblStatD30.setText("30 Days: " + fs.get(30).getFileCount() + " files, "
+                        + Utils.kmg(fc.files().getStat().get(30).getFileSize(), true, " ", "B"));
+                lblStatD30.pack();
+                lblStatY0.setText(fs.getCurrentYear() + ": " + fs.get(fs.getCurrentYear()).getFileCount() + " files, "
+                        + Utils.kmg(fc.files().getStat().get(fs.getCurrentYear()).getFileSize(), true, " ", "B"));
+                lblStatY0.pack();
+                lblStatY1.setText((fs.getCurrentYear() - 1) + ": " + fs.get(fs.getCurrentYear() - 1).getFileCount()
+                        + " files, "
+                        + Utils.kmg(fc.files().getStat().get(fs.getCurrentYear() - 1).getFileSize(), true, " ", "B"));
+                lblStatY1.pack();
+                lblStatY2.setText((fs.getCurrentYear() - 2) + ": " + fs.get(fs.getCurrentYear() - 2).getFileCount()
+                        + " files, "
+                        + Utils.kmg(fc.files().getStat().get(fs.getCurrentYear() - 2).getFileSize(), true, " ", "B"));
+                lblStatY2.pack();
+
+                lblStatTotal.getParent().layout();
             }
         });
     }
@@ -852,7 +914,7 @@ public class SwtMain {
             TreeItem parent = new TreeItem(tree, SWT.None);
             parent.setData(mc);
             parent.setText(mc.getName().length() > 0 ? mc.getName() : mc.getPath());
-            mc.files().stream()
+            mc.files().getFileItems().stream()
                     .filter(fi -> fi.isEarliestOfType() || fi.isLatestOfType() || !fi.isDateType()
                             || fi.getDateFrom().isAfter(from))
                     .filter(fi -> fi.isEarliestOfType() || fi.isLatestOfType() || matchFilter(fi.getFilename(), filter))

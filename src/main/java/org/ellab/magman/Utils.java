@@ -1,6 +1,7 @@
 package org.ellab.magman;
 
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -166,5 +167,33 @@ public class Utils {
         }
 
         return -1;
+    }
+
+    public static String kmg(final long n, final boolean upperCase, final String prefix, final String suffix) {
+        DecimalFormat dec = new DecimalFormat("0.00");
+        String s;
+        double n2;
+
+        if ((n2 = n / 1099511627776.0) > 1) {
+            s = dec.format(n2).concat((prefix == null ? "" : prefix)).concat((upperCase ? "T" : "t"))
+                    .concat(suffix == null ? "" : suffix);
+        }
+        else if ((n2 = n / 1073741824.0) > 1) {
+            s = dec.format(n2).concat((prefix == null ? "" : prefix)).concat((upperCase ? "G" : "g"))
+                    .concat(suffix == null ? "" : suffix);
+        }
+        else if ((n2 = n / 1048576.0) > 1) {
+            s = dec.format(n2).concat((prefix == null ? "" : prefix)).concat((upperCase ? "M" : "m"))
+                    .concat(suffix == null ? "" : suffix);
+        }
+        else if ((n2 = n / 1024.0) > 1) {
+            s = dec.format(n2).concat((prefix == null ? "" : prefix)).concat((upperCase ? "K" : "k"))
+                    .concat(suffix == null ? "" : suffix);
+        }
+        else {
+            s = ("" + n).concat((prefix == null ? "" : prefix)).concat(suffix == null ? "" : suffix);
+        }
+
+        return s;
     }
 }

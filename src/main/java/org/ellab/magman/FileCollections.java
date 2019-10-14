@@ -20,8 +20,8 @@ public class FileCollections {
     public class MagazineCollection {
         private String name;
         private String path;
-        private Set<FileItem> files = new TreeSet<>();
-        private Map<String, Map<FileItem.Type, TreeSet<FileItem>>> groupMap = new TreeMap<>();
+        private FileItems files = new FileItems();
+        private Map<String, Map<FileItem.Type, FileItems>> groupMap = new TreeMap<>();
         private Set<FileItem> invalidFiles = new TreeSet<>();
 
         public MagazineCollection(String name, String path) {
@@ -33,17 +33,17 @@ public class FileCollections {
             files.add(fi);
             if (fi.isValid()) {
                 String group = fi.getGroup() == null ? "" : fi.getGroup();
-                Map<FileItem.Type, TreeSet<FileItem>> map = groupMap.get(group);
+                Map<FileItem.Type, FileItems> map = groupMap.get(group);
                 if (map == null) {
                     map = new TreeMap<>();
                     groupMap.put(group, map);
                 }
-                TreeSet<FileItem> set = map.get(fi.getType());
-                if (set == null) {
-                    set = new TreeSet<>();
-                    map.put(fi.getType(), set);
+                FileItems fis = map.get(fi.getType());
+                if (fis == null) {
+                    fis = new FileItems();
+                    map.put(fi.getType(), fis);
                 }
-                set.add(fi);
+                fis.add(fi);
             }
             else {
                 invalidFiles.add(fi);
@@ -62,15 +62,15 @@ public class FileCollections {
             return groupMap.keySet();
         }
 
-        public Map<FileItem.Type, TreeSet<FileItem>> group(String group) {
+        public Map<FileItem.Type, FileItems> group(String group) {
             return groupMap.get(group);
         }
 
-        public Set<FileItem> group(String group, FileItem.Type type) {
+        public FileItems group(String group, FileItem.Type type) {
             return groupMap.get(group).get(type);
         }
 
-        public Set<FileItem> files() {
+        public FileItems files() {
             return files;
         }
 
@@ -82,7 +82,7 @@ public class FileCollections {
             groupMap.entrySet().forEach(g -> {
                 g.getValue().entrySet().forEach(e -> {
                     sb.append("  type=").append(e.getKey()).append("\n");
-                    e.getValue().forEach(v -> sb.append("    ").append(v).append("\n"));
+                    e.getValue().getFileItems().forEach(v -> sb.append("    ").append(v).append("\n"));
                 });
             });
             sb.append("]\n");
@@ -91,6 +91,7 @@ public class FileCollections {
         }
     }
 
+    private FileItems allFiles = new FileItems();
     private Map<String, MagazineCollection> map = new TreeMap<>(new Comparator<String>() {
         @Override
         // empty string sort to bottom
@@ -112,12 +113,18 @@ public class FileCollections {
     });
 
     public void add(FileItem fi) {
+        allFiles.add(fi);
+
         MagazineCollection c = map.get(fi.getParentId());
         if (c == null) {
             c = new MagazineCollection(fi.getParentId(), fi.getParentPath());
             map.put(fi.getParentId(), c);
         }
         c.add(fi);
+    }
+
+    public FileItems files() {
+        return allFiles;
     }
 
     public Collection<MagazineCollection> items() {
@@ -131,19 +138,19 @@ public class FileCollections {
             mc.groupMap.forEach((group, types) -> {
                 types.forEach((type, fis) -> {
                     // mark the first/last item of the type
-                    fis.first().setEarliestOfType(true);
-                    fis.last().setLatestOfType(true);
+                    fis.getFileItems().first().setEarliestOfType(true);
+                    fis.getFileItems().last().setLatestOfType(true);
 
                     if (type.equals(FileItem.Type.Weekly)) {
                         // Check if wrong day of week
-                        final DayOfWeek maxDow = fis.stream()
+                        final DayOfWeek maxDow = fis.getFileItems().stream()
                                 .collect(Collectors.groupingBy(s -> s.getDateFrom().getDayOfWeek(),
                                         Collectors.counting()))
                                 .entrySet().stream().max(Comparator.comparing(Entry::getValue)).get().getKey();
                         // System.out.println("max=" + maxDow);
                         List<Long> daysList = new ArrayList<>();
                         FileItem prev = null;
-                        for (FileItem fi : fis) {
+                        for (FileItem fi : fis.getFileItems()) {
                             if (!fi.getDateFrom().getDayOfWeek().equals(maxDow)) {
                                 fi.addProblem(FileItem.Problem.WrongDow, false);
                             }
@@ -159,7 +166,7 @@ public class FileCollections {
                                 .collect(Collectors.groupingBy(s -> s, Collectors.counting())).entrySet().stream()
                                 .max(Comparator.comparing(Entry::getValue));
                         if (maxFreq.isPresent() && maxFreq.get().getKey() == 14) {
-                            fis.forEach(fi -> {
+                            fis.getFileItems().forEach(fi -> {
                                 fi.setType(FileItem.Type.Biweekly);
                             });
                         }
@@ -167,7 +174,7 @@ public class FileCollections {
 
                     // add missing entries
                     FileItem prev = null;
-                    for (FileItem fi : fis) {
+                    for (FileItem fi : fis.getFileItems()) {
                         if (prev != null) {
                             if (FileItem.Type.Monthly.equals(type)) {
                                 LocalDate calPrev = prev.getDateTo();
