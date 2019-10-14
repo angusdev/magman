@@ -59,27 +59,27 @@ public class FileItemStat {
         }
     }
 
-    public void add(FileItem fi) {
-        BasicFileAttributes attr;
+    public void add(final FileItem fi) {
         try {
-            long fileSize = new File(fi.getFilePath()).length();
+            final long fileSize = new File(fi.getFilePath()).length();
 
             index.get(0).fileCount++;
             index.get(0).fileSize += fileSize;
 
-            Path file = Paths.get(fi.getFilePath());
-            attr = Files.readAttributes(file, BasicFileAttributes.class);
-            Date now = new Date();
-            if (now.getTime() - attr.creationTime().toMillis() <= 86400000l * 7) {
+            final Path file = Paths.get(fi.getFilePath());
+            final BasicFileAttributes attr = Files.readAttributes(file, BasicFileAttributes.class);
+            final long fileDate = attr.lastModifiedTime().toMillis();
+            final int fileYear = Integer.parseInt(attr.lastModifiedTime().toString().substring(0, 4));
+            final Date now = new Date();
+            if (now.getTime() - fileDate <= 86400000l * 7) {
                 index.get(7).fileCount++;
                 index.get(7).fileSize += fileSize;
             }
-            if (now.getTime() - attr.creationTime().toMillis() <= 86400000l * 30) {
+            if (now.getTime() - fileDate <= 86400000l * 30) {
                 index.get(30).fileCount++;
                 index.get(30).fileSize += fileSize;
             }
 
-            int fileYear = Integer.parseInt(attr.creationTime().toString().substring(0, 4));
             if (fileYear == currentYear) {
                 index.get(fileYear).fileCount++;
                 index.get(fileYear).fileSize += fileSize;
