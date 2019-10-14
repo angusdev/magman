@@ -682,11 +682,11 @@ public class SwtMain {
                                 renameTo = prefix + " " + guessedName + "." + ext;
                             }
 
-                            renameItem = new FileOperationDialog.Item(file, oriName, mag, renameTo);
+                            renameItem = new FileOperationDialog.Item(file, oriName, mag, type, renameTo);
                         }
 
                         if (renameItem == null) {
-                            renameItem = new FileOperationDialog.Item(file, oriName, null, null);
+                            renameItem = new FileOperationDialog.Item(file, oriName, null, null, null);
                         }
 
                         renameList.add(renameItem);
