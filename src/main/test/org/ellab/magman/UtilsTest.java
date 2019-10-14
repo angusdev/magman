@@ -60,6 +60,9 @@ class UtilsTest {
         assertEquals("201910", Utils.guessDateFromFilename("2019 October", FileItem.Type.Monthly));
         assertEquals("201910", Utils.guessDateFromFilename("11 Oct 2019", FileItem.Type.Monthly));
         assertEquals("201910", Utils.guessDateFromFilename("11 October 2019", FileItem.Type.Monthly));
+
+        assertEquals("201910-11", Utils.guessDateFromFilename("Oct Nov 2019", FileItem.Type.Monthly));
+        assertEquals("201910-11", Utils.guessDateFromFilename("11 Oct Nov 2019", FileItem.Type.Monthly));
     }
 
     private String helperTestFuzzyIndexOf(String str, String match) {

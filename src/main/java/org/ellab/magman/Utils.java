@@ -134,7 +134,14 @@ public class Utils {
         // now has year and has month
         int m = month.get(0)[1];
         if (type.equals(FileItem.Type.Monthly)) {
-            return year[1] + (m < 10 ? "0" : "") + m;
+            String s = year[1] + (m < 10 ? "0" : "") + m;
+            if (month.size() > 1) {
+                // month range
+                int m2 = month.get(1)[1];
+                s += "-" + (m2 < 10 ? "0" : "") + m2;
+            }
+
+            return s;
         }
         else if (type.equals(FileItem.Type.Weekly) || type.equals(FileItem.Type.Biweekly)) {
             int d = day.size() > 0 ? day.get(0)[1] : 0;
