@@ -36,14 +36,16 @@ public class FileOperationDialog extends Dialog {
     private Table table;
 
     private static final int COL_GROUP = 0;
-    private static final int COL_SRC = 1;
-    private static final int COL_DEST = 2;
-    private static final int COL_STATUS = 3;
+    private static final int COL_FREQ = 1;
+    private static final int COL_SRC = 2;
+    private static final int COL_DEST = 3;
+    private static final int COL_STATUS = 4;
 
     public static class Item {
         private String path;
         private MagazineCollection mc;
         private FileItem.Type type;
+        private FileItem.Type oritype;
         private String src;
         private String dest;
         private String oridest;
@@ -51,6 +53,7 @@ public class FileOperationDialog extends Dialog {
         public Item(String path, String src, MagazineCollection mc, FileItem.Type type, String dest) {
             this.path = path;
             this.mc = mc;
+            this.oritype = type;
             this.type = type;
             this.src = src;
             this.oridest = dest;
@@ -59,6 +62,7 @@ public class FileOperationDialog extends Dialog {
     }
 
     private TableColumn tblclmnGroup;
+    private TableColumn tblclmnFreq;
     private TableColumn tblclmnFrom;
     private TableColumn tblclmnTo;
     private TableColumn tblclmnStatus;
@@ -116,6 +120,10 @@ public class FileOperationDialog extends Dialog {
         tblclmnGroup = new TableColumn(table, SWT.NONE);
         tblclmnGroup.setWidth(100);
         tblclmnGroup.setText("Group");
+
+        tblclmnFreq = new TableColumn(table, SWT.NONE);
+        tblclmnFreq.setWidth(100);
+        tblclmnFreq.setText("Frequency");
 
         tblclmnFrom = new TableColumn(table, SWT.NONE);
         tblclmnFrom.setWidth(100);
@@ -182,7 +190,14 @@ public class FileOperationDialog extends Dialog {
         btnReset.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                Arrays.stream(table.getItems()).forEach(i -> i.setText(COL_DEST, ((Item) i.getData()).oridest));
+                Arrays.stream(table.getItems()).forEach(i -> {
+                    Item item = (Item) i.getData();
+                    item.type = item.oritype;
+                    item.dest = item.oridest;
+                    i.setText(COL_FREQ, ((Item) i.getData()).type.toString());
+                    i.setText(COL_DEST, ((Item) i.getData()).dest);
+                });
+                tblclmnFreq.pack();
                 tblclmnTo.pack();
             }
         });
@@ -219,6 +234,7 @@ public class FileOperationDialog extends Dialog {
             item.setData(f);
             item.setChecked(f.dest != null);
             item.setText(COL_GROUP, f.mc != null ? f.mc.getName() : "");
+            item.setText(COL_FREQ, f.type.toString());
             item.setText(COL_SRC, f.src);
             item.setText(COL_DEST, f.dest != null ? f.dest : "");
         });
@@ -234,8 +250,7 @@ public class FileOperationDialog extends Dialog {
         btnMonthly.setEnabled(false);
         btnBiMonthly.setEnabled(false);
 
-        if (Arrays.stream(table.getSelection())
-                .anyMatch(i -> FileItem.Type.Monthly.equals(((Item) i.getData()).type))) {
+        if (Arrays.stream(table.getSelection()).anyMatch(i -> ((Item) i.getData()).type != null)) {
             btnPrevMonth.setEnabled(true);
             btnNextMonth.setEnabled(true);
             btnMonthly.setEnabled(true);
@@ -250,11 +265,11 @@ public class FileOperationDialog extends Dialog {
      *            1 - add / minus month, 2 - change to monthly, 3 - change to bi-monthly
      */
     private void processMonthly(int action, Integer add) {
-        final Pattern pattern = Pattern.compile("(.*\\s)(\\d{4})(\\d{2})(\\-(\\d{2}))?(\\.[^\\.]+)$");
+        final Pattern patternMonthly = Pattern.compile("(.*\\s)(\\d{4})(\\d{2})(\\-(\\d{2}))?(\\.[^\\.]+)$");
         Arrays.stream(table.getSelection()).filter(i -> FileItem.Type.Monthly.equals(((Item) i.getData()).type))
                 .forEach(i -> {
                     Item it = (Item) i.getData();
-                    Matcher m = pattern.matcher(it.dest);
+                    Matcher m = patternMonthly.matcher(it.dest);
                     if (m.matches()) {
                         final String prefix = m.group(1);
                         String year = m.group(2);
@@ -299,6 +314,26 @@ public class FileOperationDialog extends Dialog {
                         }
                     }
                 });
+
+        final Pattern patternWeekly = Pattern.compile("(.*\\s)(\\d{4})(\\d{2})(\\d{2})?(\\.[^\\.]+)$");
+        Arrays.stream(table.getSelection()).filter(i -> FileItem.Type.Weekly.equals(((Item) i.getData()).type))
+                .forEach(i -> {
+                    Item it = (Item) i.getData();
+                    Matcher m = patternWeekly.matcher(it.dest);
+                    if (m.matches()) {
+                        final String prefix = m.group(1);
+                        String year = m.group(2);
+                        int m1 = Integer.parseInt(m.group(3));
+                        final String ext = m.group(5);
+                        if (action == 2) {
+                            it.type = FileItem.Type.Monthly;
+                            i.setText(COL_FREQ, it.type.toString());
+                            it.dest = prefix + year + (m1 < 10 ? "0" : "") + m1 + ext;
+                            i.setText(COL_DEST, it.dest);
+                        }
+                    }
+                });
+        tblclmnFreq.pack();
         tblclmnTo.pack();
     }
 
