@@ -25,6 +25,8 @@ import org.eclipse.swt.dnd.FileTransfer;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.MenuDetectEvent;
+import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -36,6 +38,7 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.program.Program;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
@@ -45,6 +48,8 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Link;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.ProgressBar;
@@ -300,6 +305,13 @@ public class SwtMain {
         compositeTree.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 5, 1));
 
         tree = new Tree(compositeTree, SWT.BORDER | SWT.FULL_SELECTION);
+        tree.addMenuDetectListener(new MenuDetectListener() {
+            public void menuDetected(MenuDetectEvent e) {
+                if (tree.getSelectionCount() <= 0) {
+                    e.doit = false;
+                }
+            }
+        });
         tree.setLinesVisible(true);
         tree.setHeaderVisible(true);
 
@@ -318,6 +330,29 @@ public class SwtMain {
         TreeColumn trclmnStatus = new TreeColumn(tree, SWT.NONE);
         trclmnStatus.setWidth(100);
         trclmnStatus.setText("Status");
+
+        Menu menu = new Menu(tree);
+        tree.setMenu(menu);
+
+        MenuItem mntmOpenPath = new MenuItem(menu, SWT.NONE);
+        mntmOpenPath.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                TreeItem[] selection = tree.getSelection();
+                if (selection.length > 0) {
+                    TreeItem ti = selection[0];
+                    while (ti.getParentItem() != null) {
+                        ti = ti.getParentItem();
+                    }
+                    Object data = ti.getData();
+                    if (data instanceof MagazineCollection) {
+                        MagazineCollection mc = (MagazineCollection) data;
+                        Program.launch(mc.getPath());
+                    }
+                }
+            }
+        });
+        mntmOpenPath.setText("&Open File Location");
 
         txtMessage = new Text(shell, SWT.BORDER | SWT.READ_ONLY | SWT.H_SCROLL | SWT.V_SCROLL | SWT.CANCEL | SWT.MULTI);
         txtMessage.setBackground(Display.getCurrent().getSystemColor(SWT.COLOR_LIST_BACKGROUND));
@@ -815,6 +850,7 @@ public class SwtMain {
         tree.setRedraw(false);
         for (MagazineCollection mc : fc.items()) {
             TreeItem parent = new TreeItem(tree, SWT.None);
+            parent.setData(mc);
             parent.setText(mc.getName().length() > 0 ? mc.getName() : mc.getPath());
             mc.files().stream()
                     .filter(fi -> fi.isEarliestOfType() || fi.isLatestOfType() || !fi.isDateType()
@@ -829,6 +865,7 @@ public class SwtMain {
                     .filter(fi -> fi.isEarliestOfType() || fi.isLatestOfType() || unknown || !fi.isValid())
                     .forEach(fi -> {
                         TreeItem t = new TreeItem(parent, 0);
+                        t.setData(fi);
                         t.setText(fi.getFilename());
                         if (fi.isValid() || fi.isMissing()) {
                             t.setText(1, fi.getGroup() == null ? "" : fi.getGroup());
