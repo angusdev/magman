@@ -2,6 +2,7 @@ package org.ellab.magman;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,7 +12,10 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.eclipse.swt.SWT;
@@ -126,6 +130,8 @@ public class SwtMain {
     private Composite compositeStatusbar;
     private Label lblVersion;
     private Link linkWebsite;
+
+    private Map<String, ToolItem> nameButtons = new HashMap<>();
 
     private FileCollections fc;
     int currProgressDirIndex;
@@ -551,11 +557,14 @@ public class SwtMain {
             }
         });
 
-        ToolItem[] nameButtons = { btnNameA, btnNameB, btnNameC, btnNameD, btnNameE, btnNameF, btnNameG, btnNameH,
+        ToolItem[] nameButtonsArray = { btnNameA, btnNameB, btnNameC, btnNameD, btnNameE, btnNameF, btnNameG, btnNameH,
                 btnNameI, btnNameJ, btnNameK, btnNameL, btnNameM, btnNameN, btnNameO, btnNameP, btnNameQ, btnNameR,
-                btnNameS, btnNameT, btnNameU, btnNameV, btnNameW, btnNameX, btnNameY, btnNameZ, btnNameNumber,
-                btnNameChinese };
-        Arrays.stream(nameButtons).forEach(btn -> btn.addSelectionListener((new SelectionAdapter() {
+                btnNameS, btnNameT, btnNameU, btnNameV, btnNameW, btnNameX, btnNameY, btnNameZ,
+                btnNameNumber /* , btnNameChinese */ };
+        nameButtons = Arrays.stream(nameButtonsArray).collect(Collectors.toMap(ToolItem::getText, Function.identity()));
+        nameButtons.put("UTF8", btnNameChinese);
+        nameButtons.values().stream().forEach(b -> b.setEnabled(false));
+        nameButtons.values().stream().forEach(b -> b.addSelectionListener((new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 scrollTreeTo(((ToolItem) e.getSource()).getText());
@@ -681,6 +690,8 @@ public class SwtMain {
 
         tree.removeAll();
         comboName.removeAll();
+        nameButtons.values().stream().forEach(b -> b.setEnabled(false));
+
         fc = new FileCollections();
         new Thread() {
             @Override
@@ -804,10 +815,23 @@ public class SwtMain {
                 tree.getColumn(0).setWidth(Math.max(100, width));
                 tree.setRedraw(true);
 
-                // populate drop down
+                // populate drop down and enable buttons
                 fc.items().stream().forEach(mc -> {
                     if (mc.getName().length() > 0) {
                         comboName.add(mc.getName());
+
+                        String prefix = mc.getName().substring(0, 1);
+                        if (prefix.matches("\\d")) {
+                            prefix = "#";
+                        }
+                        else if (!Charset.forName("ISO-8859-1").newEncoder().canEncode(prefix)) {
+                            prefix = "UTF8";
+                        }
+
+                        ToolItem b = nameButtons.get(prefix);
+                        if (b != null) {
+                            b.setEnabled(true);
+                        }
                     }
                 });
 
