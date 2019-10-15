@@ -9,7 +9,6 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -64,7 +63,6 @@ import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 import org.ellab.magman.FileCollections.MagazineCollection;
 import org.ellab.magman.FileItem.Problem;
-import org.ellab.magman.FileItem.Type;
 
 public class SwtMain {
     private Display display;
@@ -586,31 +584,38 @@ public class SwtMain {
             @Override
             public void drop(DropTargetEvent event) {
                 if (fileTransfer.isSupportedType(event.currentDataType)) {
-                    Arrays.stream((String[]) event.data).forEach(f -> {
-                        MagazineCollection mag = fc.items().stream().filter(
-                                mc -> mc.getName().length() > 0 && new File(f).getName().startsWith(mc.getName()))
-                                .reduce(null,
-                                        (a, b) -> a == null || b.getName().length() > a.getName().length() ? b : a);
+                    display.asyncExec(new Runnable() {
+                        @Override
+                        public void run() {
+                            Arrays.stream((String[]) event.data).forEach(f -> {
+                                MagazineCollection mag = fc.items().stream()
+                                        .filter(mc -> mc.getName().length() > 0
+                                                && new File(f).getName().startsWith(mc.getName()))
+                                        .reduce(null, (a,
+                                                b) -> a == null || b.getName().length() > a.getName().length() ? b : a);
 
-                        if (mag != null) {
-                            try {
-                                Path temp = Files.move(Paths.get(f),
-                                        Paths.get(mag.getPath() + "/" + new File(f).getName()));
+                                if (mag != null) {
+                                    try {
+                                        Path temp = Files.move(Paths.get(f),
+                                                Paths.get(mag.getPath() + "/" + new File(f).getName()));
 
-                                if (temp != null) {
-                                    log("Moved " + Paths.get(f) + " to "
-                                            + Paths.get(mag.getPath() + "/" + new File(f).getName()) + " successfully");
+                                        if (temp != null) {
+                                            log("Moved " + Paths.get(f) + " to "
+                                                    + Paths.get(mag.getPath() + "/" + new File(f).getName())
+                                                    + " successfully");
+                                        }
+                                        else {
+                                            log("Failed to move the file");
+                                        }
+                                    }
+                                    catch (IOException ex) {
+                                        ex.printStackTrace();
+                                    }
                                 }
                                 else {
-                                    log("Failed to move the file");
+                                    log("Cannot find a match of " + Paths.get(f));
                                 }
-                            }
-                            catch (IOException ex) {
-                                ex.printStackTrace();
-                            }
-                        }
-                        else {
-                            log("Cannot find a match of " + Paths.get(f));
+                            });
                         }
                     });
                 }
@@ -628,73 +633,14 @@ public class SwtMain {
             @Override
             public void drop(DropTargetEvent event) {
                 if (fileTransfer.isSupportedType(event.currentDataType)) {
-                    List<FileOperationDialog.Item> renameList = new ArrayList<>();
-                    Arrays.stream((String[]) event.data).forEach(file -> {
-                        FileOperationDialog.Item renameItem = null;
-                        String renameTo = null;
-
-                        // extract the file name and extension by regexp
-                        final String oriName = new File(file).getName();
-                        final String ext = oriName.lastIndexOf('.') > 0
-                                ? oriName.substring(oriName.lastIndexOf('.') + 1, oriName.length()).toLowerCase()
-                                : null;
-                        String name = oriName.replaceFirst("[.][^.]+$", "");
-                        name = name.replaceAll("[\\.\\-+=_]", " ").replaceAll("\\s\\s+", " ");
-                        name = name.toUpperCase();
-
-                        final String searchName = name;
-
-                        // match the collection
-                        final MagazineCollection mag = fc.items().stream()
-                                .filter(mc -> mc.getName().length() > 0
-                                        && Utils.fuzzyIndexOf(searchName, mc.getName().toUpperCase()) != null)
-                                .reduce(null,
-                                        (a, b) -> a == null || b.getName().length() > a.getName().length() ? b : a);
-
-                        // find the longest matched group (region)
-                        if (mag != null) {
-                            final String group = mag.groups().stream().reduce(null, (a, b) -> {
-                                String m = mag.getName().toUpperCase()
-                                        + ((b != null && b.length() > 0) ? (" " + b) : "");
-                                if (Utils.fuzzyIndexOf(searchName, m) != null) {
-                                    return a == null || b.length() > a.length() ? b : a;
-                                }
-                                else {
-                                    return a;
-                                }
-                            });
-
-                            // get the most frequent type
-                            // note: group can't be null as it matched before
-                            final Type type = mag.group(group).keySet().stream()
-                                    .reduce((a, b) -> a.ordinal() < b.ordinal() ? a : b).get();
-
-                            final String prefix = mag.getName() + (group.length() > 0 ? (" " + group) : "");
-
-                            // remove the magazine name from the file name
-                            int[] pos = Utils.fuzzyIndexOf(name, prefix.toUpperCase());
-                            // pos must be non-null
-                            final String remainedName = name.substring(0, pos[0])
-                                    + name.substring(pos[1], name.length()).trim();
-
-                            final String guessedName = Utils.guessDateFromFilename(remainedName, type);
-                            if (!guessedName.equals(remainedName)) {
-                                renameTo = prefix + " " + guessedName + "." + ext;
-                            }
-
-                            renameItem = new FileOperationDialog.Item(file, oriName, mag, type, renameTo);
+                    display.asyncExec(new Runnable() {
+                        @Override
+                        public void run() {
+                            new FileOperationDialog(shell,
+                                    SWT.APPLICATION_MODAL | SWT.TITLE | SWT.RESIZE | SWT.CLOSE | SWT.MAX | SWT.MIN)
+                                            .open((String[]) event.data, fc);
                         }
-
-                        if (renameItem == null) {
-                            renameItem = new FileOperationDialog.Item(file, oriName, null, null, null);
-                        }
-
-                        renameList.add(renameItem);
                     });
-
-                    new FileOperationDialog(shell,
-                            SWT.APPLICATION_MODAL | SWT.TITLE | SWT.RESIZE | SWT.CLOSE | SWT.MAX | SWT.MIN)
-                                    .open(renameList);
                 }
             }
         });

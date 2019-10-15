@@ -1,5 +1,7 @@
 package org.ellab.magman;
 
+import java.io.File;
+import java.nio.file.Paths;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -15,6 +17,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+
+import org.ellab.magman.FileItem.Type;
 
 public class FileCollections {
     public class MagazineCollection {
@@ -224,5 +228,59 @@ public class FileCollections {
         });
 
         missing.forEach(m -> add(m));
+    }
+
+    public FileItem guessFilename(String oriName) {
+        FileItem renameItem = null;
+        String renameTo = null;
+
+        // extract the file name and extension by regexp
+        final String ext = oriName.lastIndexOf('.') > 0
+                ? oriName.substring(oriName.lastIndexOf('.') + 1, oriName.length()).toLowerCase()
+                : null;
+        String name = oriName.replaceFirst("[.][^.]+$", "");
+        name = name.replaceAll("[\\.\\-+=_]", " ").replaceAll("\\s\\s+", " ");
+        name = name.toUpperCase();
+
+        final String searchName = name;
+
+        // match the collection
+        final MagazineCollection mag = items().stream().filter(
+                mc -> mc.getName().length() > 0 && Utils.fuzzyIndexOf(searchName, mc.getName().toUpperCase()) != null)
+                .reduce(null, (a, b) -> a == null || b.getName().length() > a.getName().length() ? b : a);
+
+        // find the longest matched group (region)
+        if (mag != null) {
+            final String group = mag.groups().stream().reduce(null, (a, b) -> {
+                String m = mag.getName().toUpperCase() + ((b != null && b.length() > 0) ? (" " + b) : "");
+                if (Utils.fuzzyIndexOf(searchName, m) != null) {
+                    return a == null || b.length() > a.length() ? b : a;
+                }
+                else {
+                    return a;
+                }
+            });
+
+            // get the most frequent type
+            // note: group can't be null as it matched before
+            final Type type = mag.group(group).keySet().stream().reduce((a, b) -> a.ordinal() < b.ordinal() ? a : b)
+                    .get();
+
+            final String prefix = mag.getName() + (group.length() > 0 ? (" " + group) : "");
+
+            // remove the magazine name from the file name
+            int[] pos = Utils.fuzzyIndexOf(name, prefix.toUpperCase());
+            // pos must be non-null
+            final String remainedName = name.substring(0, pos[0]) + name.substring(pos[1], name.length()).trim();
+
+            final String guessedName = Utils.guessDateFromFilename(remainedName, type);
+            if (!guessedName.equals(remainedName)) {
+                renameTo = prefix + " " + guessedName + "." + ext;
+            }
+
+            renameItem = new FileItem(Paths.get(mag.getPath() + File.separator + renameTo), mag.getName());
+        }
+
+        return renameItem;
     }
 }

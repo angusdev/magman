@@ -1,9 +1,11 @@
 package org.ellab.magman;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -31,7 +33,6 @@ import org.eclipse.swt.widgets.TableItem;
 import org.ellab.magman.FileCollections.MagazineCollection;
 
 public class FileOperationDialog extends Dialog {
-    protected Object result;
     protected Shell shell;
     private Table table;
 
@@ -50,14 +51,14 @@ public class FileOperationDialog extends Dialog {
         private String dest;
         private String oridest;
 
-        public Item(String path, String src, MagazineCollection mc, FileItem.Type type, String dest) {
+        public Item(String path, String src, FileItem fi) {
             this.path = path;
-            this.mc = mc;
-            this.oritype = type;
-            this.type = type;
+            this.mc = null;
+            this.oritype = fi != null ? fi.getType() : null;
+            this.type = this.oritype;
             this.src = src;
-            this.oridest = dest;
-            this.dest = dest;
+            this.oridest = fi != null ? fi.getFilename() : null;
+            this.dest = this.oridest;
         }
     }
 
@@ -76,7 +77,26 @@ public class FileOperationDialog extends Dialog {
         super(parent, style);
     }
 
-    public Object open(List<Item> files) {
+    public void open(String[] files, FileCollections fc) {
+        List<FileOperationDialog.Item> renameList = new ArrayList<>();
+        Arrays.stream(files).forEach(file -> {
+            // extract the file name and extension by regexp
+            final String oriName = new File(file).getName();
+
+            FileItem fi = fc.guessFilename(oriName);
+
+            if (fi != null) {
+                renameList.add(new FileOperationDialog.Item(file, oriName, fi));
+            }
+            else {
+                renameList.add(new FileOperationDialog.Item(file, oriName, null));
+            }
+        });
+
+        open(renameList);
+    }
+
+    private void open(List<Item> files) {
         createContents();
         init(files);
 
@@ -97,7 +117,6 @@ public class FileOperationDialog extends Dialog {
                 display.sleep();
             }
         }
-        return result;
     }
 
     private void createContents() {
