@@ -24,6 +24,7 @@ public class FileCollections {
     public class MagazineCollection {
         private String name;
         private String path;
+        private boolean dummy = true;
         private FileItems files = new FileItems();
         private Map<String, Map<FileItem.Type, FileItems>> groupMap = new TreeMap<>();
         private Set<FileItem> invalidFiles = new TreeSet<>();
@@ -35,6 +36,9 @@ public class FileCollections {
 
         public void add(FileItem fi) {
             files.add(fi);
+
+            dummy &= fi.isDummy();
+
             if (fi.isValid()) {
                 String group = fi.getGroup() == null ? "" : fi.getGroup();
                 Map<FileItem.Type, FileItems> map = groupMap.get(group);
@@ -60,6 +64,10 @@ public class FileCollections {
 
         public String getPath() {
             return path;
+        }
+
+        public boolean isDummy() {
+            return dummy;
         }
 
         public Set<String> groups() {
@@ -249,8 +257,9 @@ public class FileCollections {
         final String searchName = name;
 
         // match the collection
-        final MagazineCollection mag = items().stream().filter(
-                mc -> mc.getName().length() > 0 && Utils.fuzzyIndexOf(searchName, mc.getName().toUpperCase()) != null)
+        final MagazineCollection mag = items().stream()
+                .filter(mc -> !mc.isDummy() && mc.getName().length() > 0
+                        && Utils.fuzzyIndexOf(searchName, mc.getName().toUpperCase()) != null)
                 .reduce(null, (a, b) -> a == null || b.getName().length() > a.getName().length() ? b : a);
 
         // find the longest matched group (region)
