@@ -51,9 +51,9 @@ public class FileOperationDialog extends Dialog {
         private String dest;
         private String oridest;
 
-        public Item(String path, String src, FileItem fi) {
+        public Item(String path, String src, FileItem fi, MagazineCollection mc) {
             this.path = path;
-            this.mc = null;
+            this.mc = mc;
             this.oritype = fi != null ? fi.getType() : null;
             this.type = this.oritype;
             this.src = src;
@@ -86,10 +86,10 @@ public class FileOperationDialog extends Dialog {
             FileItem fi = fc.guessFilename(oriName);
 
             if (fi != null) {
-                renameList.add(new FileOperationDialog.Item(file, oriName, fi));
+                renameList.add(new FileOperationDialog.Item(file, oriName, fi, fc.mc(fi.getParentId())));
             }
             else {
-                renameList.add(new FileOperationDialog.Item(file, oriName, null));
+                renameList.add(new FileOperationDialog.Item(file, oriName, null, null));
             }
         });
 
