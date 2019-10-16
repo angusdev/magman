@@ -9,7 +9,7 @@ public class FileItems {
     public void add(FileItem fi) {
         if (!fileitems.contains(fi)) {
             fileitems.add(fi);
-            if (!fi.isMissing()) {
+            if (fi.isFile()) {
                 stat.add(fi);
             }
         }

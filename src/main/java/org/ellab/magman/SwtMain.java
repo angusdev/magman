@@ -730,6 +730,8 @@ public class SwtMain {
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                 if (finalIncludeDir != null && !dir.equals(path)
                         && dir.getFileName().toString().toUpperCase().indexOf(finalIncludeDir) < 0) {
+                    fc.add(FileItem.createDummyItem(dir.toFile().listFiles().length + "", dir,
+                            dir.getFileName().toString()));
                     return FileVisitResult.SKIP_SUBTREE;
                 }
 
@@ -885,47 +887,56 @@ public class SwtMain {
             parent.setData(mc);
             parent.setText(mc.getName().length() > 0 ? mc.getName() : mc.getPath());
             mc.files().getFileItems().stream()
-                    .filter(fi -> fi.isEarliestOfType() || fi.isLatestOfType() || !fi.isDateType()
+                    .filter(fi -> fi.isDummy() || fi.isEarliestOfType() || fi.isLatestOfType() || !fi.isDateType()
                             || fi.getDateFrom().isAfter(from))
-                    .filter(fi -> fi.isEarliestOfType() || fi.isLatestOfType() || matchFilter(fi.getFilename(), filter))
-                    .filter(fi -> fi.isEarliestOfType() || fi.isLatestOfType() || ok || !fi.isOk())
-                    .filter(fi -> fi.isEarliestOfType() || fi.isLatestOfType() || missingDate || !fi.isMissing()
-                            || !fi.isDateType())
-                    .filter(fi -> fi.isEarliestOfType() || fi.isLatestOfType() || missingIssue || !fi.isMissing()
-                            || fi.isDateType())
-                    .filter(fi -> fi.isEarliestOfType() || fi.isLatestOfType() || invalid || fi.isAlien())
-                    .filter(fi -> fi.isEarliestOfType() || fi.isLatestOfType() || unknown || !fi.isValid())
+                    .filter(fi -> fi.isDummy() || fi.isEarliestOfType() || fi.isLatestOfType()
+                            || matchFilter(fi.getFilename(), filter))
+                    .filter(fi -> fi.isDummy() || fi.isEarliestOfType() || fi.isLatestOfType() || ok || !fi.isOk())
+                    .filter(fi -> fi.isDummy() || fi.isEarliestOfType() || fi.isLatestOfType() || missingDate
+                            || !fi.isMissing() || !fi.isDateType())
+                    .filter(fi -> fi.isDummy() || fi.isEarliestOfType() || fi.isLatestOfType() || missingIssue
+                            || !fi.isMissing() || fi.isDateType())
+                    .filter(fi -> fi.isDummy() || fi.isEarliestOfType() || fi.isLatestOfType() || invalid
+                            || fi.isAlien())
+                    .filter(fi -> fi.isDummy() || fi.isEarliestOfType() || fi.isLatestOfType() || unknown
+                            || !fi.isValid())
                     .forEach(fi -> {
                         TreeItem t = new TreeItem(parent, 0);
                         t.setData(fi);
-                        t.setText(fi.getFilename());
-                        if (fi.isValid() || fi.isMissing()) {
-                            t.setText(1, fi.getGroup() == null ? "" : fi.getGroup());
-                            t.setText(2, fi.getDateStr() == null ? "" : fi.getDateStr());
-                            if (fi.getProblems().size() > 0) {
-                                // valid but format problem
-                                t.setBackground(new Color(display, new RGB(255, 255, 128)));
-                            }
-                            else if (fi.isMissing()) {
-                                t.setForeground(new Color(display, new RGB(255, 0, 0)));
-                                t.setText(3, "Missing");
-                            }
-                        }
-                        else if (fi.isAlien()) {
-                            t.setBackground(new Color(display, new RGB(255, 127, 127)));
-                            t.setText(3, "Unknown");
+                        if (fi.isDummy()) {
+                            t.setText(fi.getFilename() + " files ...");
+                            t.setBackground(new Color(display, new RGB(192, 192, 192)));
                         }
                         else {
-                            t.setBackground(new Color(display, new RGB(255, 192, 127)));
-                        }
-
-                        if (fi.getProblems().size() > 0) {
-                            String pstr = (t.getText(3) + "").trim();
-                            for (Problem p : fi.getProblems()) {
-                                pstr += " " + p.toString();
+                            t.setText(fi.getFilename());
+                            if (fi.isValid() || fi.isMissing()) {
+                                t.setText(1, fi.getGroup() == null ? "" : fi.getGroup());
+                                t.setText(2, fi.getDateStr() == null ? "" : fi.getDateStr());
+                                if (fi.getProblems().size() > 0) {
+                                    // valid but format problem
+                                    t.setBackground(new Color(display, new RGB(255, 255, 128)));
+                                }
+                                else if (fi.isMissing()) {
+                                    t.setForeground(new Color(display, new RGB(255, 0, 0)));
+                                    t.setText(3, "Missing");
+                                }
                             }
-                            pstr = pstr.trim();
-                            t.setText(3, pstr);
+                            else if (fi.isAlien()) {
+                                t.setBackground(new Color(display, new RGB(255, 127, 127)));
+                                t.setText(3, "Unknown");
+                            }
+                            else {
+                                t.setBackground(new Color(display, new RGB(255, 192, 127)));
+                            }
+
+                            if (fi.getProblems().size() > 0) {
+                                String pstr = (t.getText(3) + "").trim();
+                                for (Problem p : fi.getProblems()) {
+                                    pstr += " " + p.toString();
+                                }
+                                pstr = pstr.trim();
+                                t.setText(3, pstr);
+                            }
                         }
                     });
 

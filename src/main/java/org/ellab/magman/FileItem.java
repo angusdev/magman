@@ -47,6 +47,7 @@ public class FileItem implements Comparable<FileItem> {
     private boolean alien;
     private boolean valid;
     private boolean missing;
+    private boolean dummy;
     private boolean latestOfType;
     private boolean earliestOfType;
     private String group;
@@ -67,6 +68,20 @@ public class FileItem implements Comparable<FileItem> {
         this.parentPath = file.getParent().toAbsolutePath().toString();
 
         process();
+    }
+
+    public static FileItem createDummyItem(String filename, Path parentPath, String parentId) {
+        FileItem fi = new FileItem();
+
+        fi.filename = filename;
+        fi.parent = parentPath.getFileName().toString();
+        parentPath.getFileName().toString();
+        fi.parentId = parentId;
+        fi.parentPath = fi.filePath = parentPath.toAbsolutePath().toString();
+
+        fi.dummy = true;
+
+        return fi;
     }
 
     public static FileItem createMissingFileItem(FileItem o, LocalDate dateFrom, LocalDate dateTo) {
@@ -348,8 +363,16 @@ public class FileItem implements Comparable<FileItem> {
         return alien;
     }
 
+    public boolean isFile() {
+        return !missing && !dummy;
+    }
+
     public boolean isMissing() {
         return missing;
+    }
+
+    public boolean isDummy() {
+        return dummy;
     }
 
     public boolean isEarliestOfType() {
