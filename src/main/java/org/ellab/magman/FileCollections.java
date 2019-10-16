@@ -131,6 +131,10 @@ public class FileCollections {
         return allFiles;
     }
 
+    public MagazineCollection mc(String key) {
+        return map.get(key);
+    }
+
     public Collection<MagazineCollection> items() {
         return map.values();
     }

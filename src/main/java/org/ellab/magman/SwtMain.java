@@ -730,8 +730,7 @@ public class SwtMain {
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                 if (finalIncludeDir != null && !dir.equals(path)
                         && dir.getFileName().toString().toUpperCase().indexOf(finalIncludeDir) < 0) {
-                    fc.add(FileItem.createDummyItem(dir.toFile().listFiles().length + "", dir,
-                            dir.getFileName().toString()));
+                    fc.add(FileItem.createDummyItem("Skipped ...", dir, dir.getFileName().toString()));
                     return FileVisitResult.SKIP_SUBTREE;
                 }
 
@@ -904,8 +903,8 @@ public class SwtMain {
                         TreeItem t = new TreeItem(parent, 0);
                         t.setData(fi);
                         if (fi.isDummy()) {
-                            t.setText(fi.getFilename() + " files ...");
-                            t.setBackground(new Color(display, new RGB(192, 192, 192)));
+                            t.setText(fi.getFilename());
+                            t.setForeground(new Color(display, new RGB(128, 128, 128)));
                         }
                         else {
                             t.setText(fi.getFilename());
