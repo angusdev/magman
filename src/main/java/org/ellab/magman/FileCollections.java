@@ -287,11 +287,14 @@ public class FileCollections {
             final String remainedName = name.substring(0, pos[0]) + name.substring(pos[1], name.length()).trim();
 
             final String guessedName = Utils.guessDateFromFilename(remainedName, type);
+
             if (!guessedName.equals(remainedName)) {
                 renameTo = prefix + " " + guessedName + "." + ext;
             }
 
-            renameItem = new FileItem(Paths.get(mag.getPath() + File.separator + renameTo), mag.getName());
+            if (renameTo != null) {
+                renameItem = new FileItem(Paths.get(mag.getPath() + File.separator + renameTo), mag.getName());
+            }
         }
 
         return renameItem;
