@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -90,6 +91,27 @@ public class FileOperationDialog extends Dialog {
             }
             else {
                 renameList.add(new FileOperationDialog.Item(file, oriName, null, null));
+            }
+        });
+
+        renameList.sort(new Comparator<FileOperationDialog.Item>() {
+            @Override
+            public int compare(FileOperationDialog.Item a, FileOperationDialog.Item b) {
+                if (a.mc == null) {
+                    return -1;
+                }
+                else if (b.mc == null) {
+                    return 1;
+                }
+                else if (!a.mc.getName().equals(b.mc.getName())) {
+                    return a.mc.getName().compareTo(b.mc.getName());
+                }
+                else if (!a.type.equals(b.type)) {
+                    return a.type.ordinal() - b.type.ordinal();
+                }
+                else {
+                    return a.dest.compareTo(b.dest);
+                }
             }
         });
 
