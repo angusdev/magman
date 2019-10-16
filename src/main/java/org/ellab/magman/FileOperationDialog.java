@@ -253,7 +253,7 @@ public class FileOperationDialog extends Dialog {
             item.setData(f);
             item.setChecked(f.dest != null);
             item.setText(COL_GROUP, f.mc != null ? f.mc.getName() : "");
-            item.setText(COL_FREQ, f.type.toString());
+            item.setText(COL_FREQ, f.type != null ? f.type.toString() : "");
             item.setText(COL_SRC, f.src);
             item.setText(COL_DEST, f.dest != null ? f.dest : "");
         });
