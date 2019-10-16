@@ -879,6 +879,9 @@ public class SwtMain {
         final boolean invalid = btnInvalid.getSelection();
         final boolean unknown = btnUnknown.getSelection();
 
+        // need to be effectively final, so make it a size-1 array
+        final TreeItem[] scrollTo = { null };
+
         tree.removeAll();
         tree.setRedraw(false);
         for (MagazineCollection mc : fc.items()) {
@@ -907,6 +910,11 @@ public class SwtMain {
                             t.setForeground(new Color(display, new RGB(128, 128, 128)));
                         }
                         else {
+                            if (scrollTo[0] == null) {
+                                // scroll to first non dummy item
+                                scrollTo[0] = parent;
+                            }
+
                             t.setText(fi.getFilename());
                             if (fi.isValid() || fi.isMissing()) {
                                 t.setText(1, fi.getGroup() == null ? "" : fi.getGroup());
@@ -948,6 +956,11 @@ public class SwtMain {
             item.setExpanded(true);
         }
         tree.setRedraw(true);
+
+        if (scrollTo[0] != null) {
+            tree.setTopItem(scrollTo[0]);
+            tree.setSelection(scrollTo[0]);
+        }
     }
 
     private void scrollTreeTo(String str) {
