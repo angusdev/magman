@@ -79,7 +79,7 @@ public class Utils {
                 if (strToMonth > 0) {
                     month.add(new int[] { i, strToMonth, 1 });
                 }
-                else if (s.matches("^\\d{2}$")) {
+                else if (s.matches("^\\d{1,2}$")) {
                     final int value = Integer.parseInt(s);
 
                     // yyyy 12
@@ -123,12 +123,27 @@ public class Utils {
 
         if (month.size() == 0) {
             // no month, must be monthOrDay
+
             if (monthOrDay.size() == 0) {
+                // no monthOrDay, not match
                 return name;
             }
 
-            month.add(monthOrDay.get(0));
-            monthOrDay.remove(0);
+            if (monthOrDay.size() == 1) {
+                // only 1 monthOrDay, this must be month
+                month.add(monthOrDay.get(0));
+                monthOrDay.remove(0);
+            }
+            else if (monthOrDay.get(0)[0] < year[0]) {
+                // more than 1 monthOrDay, and this is in front of year, it should be dd mm yyyy
+                month.add(monthOrDay.get(1));
+                monthOrDay.remove(1);
+            }
+            else {
+                // yyyy mm dd
+                month.add(monthOrDay.get(0));
+                monthOrDay.remove(0);
+            }
         }
 
         // now has year and has month

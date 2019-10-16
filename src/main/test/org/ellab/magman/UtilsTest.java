@@ -46,6 +46,7 @@ class UtilsTest {
         assertEquals("20191011", Utils.guessDateFromFilename("20191011", FileItem.Type.Weekly));
         assertEquals("20191011", Utils.guessDateFromFilename("2019 Oct 11", FileItem.Type.Weekly));
         assertEquals("20191011", Utils.guessDateFromFilename("2019 October 11", FileItem.Type.Weekly));
+        assertEquals("20191008", Utils.guessDateFromFilename("8 Oct 2019", FileItem.Type.Weekly));
         assertEquals("20191011", Utils.guessDateFromFilename("11 Oct 2019", FileItem.Type.Weekly));
         assertEquals("20191011", Utils.guessDateFromFilename("11 October 2019", FileItem.Type.Weekly));
         assertEquals("20191011", Utils.guessDateFromFilename("11 2019 Oct", FileItem.Type.Weekly));
@@ -54,12 +55,16 @@ class UtilsTest {
         assertEquals("20191011", Utils.guessDateFromFilename("October 11 2019", FileItem.Type.Weekly));
         assertEquals("20191011", Utils.guessDateFromFilename("2019 10 11", FileItem.Type.Weekly));
         assertEquals("20191021", Utils.guessDateFromFilename("2019 10 21", FileItem.Type.Weekly));
+        assertEquals("20191008", Utils.guessDateFromFilename("8 10 2019", FileItem.Type.Weekly));
         assertEquals("20191021", Utils.guessDateFromFilename("21 10 2019", FileItem.Type.Weekly));
+        assertEquals("20190231", Utils.guessDateFromFilename("31 02 2019", FileItem.Type.Weekly));
 
         assertEquals("201910", Utils.guessDateFromFilename("October 2019", FileItem.Type.Monthly));
         assertEquals("201910", Utils.guessDateFromFilename("2019 October", FileItem.Type.Monthly));
+        assertEquals("201910", Utils.guessDateFromFilename("8 Oct 2019", FileItem.Type.Monthly));
         assertEquals("201910", Utils.guessDateFromFilename("11 Oct 2019", FileItem.Type.Monthly));
         assertEquals("201910", Utils.guessDateFromFilename("11 October 2019", FileItem.Type.Monthly));
+        assertEquals("201910", Utils.guessDateFromFilename("8 10 2019", FileItem.Type.Monthly));
 
         assertEquals("201910-11", Utils.guessDateFromFilename("Oct Nov 2019", FileItem.Type.Monthly));
         assertEquals("201910-11", Utils.guessDateFromFilename("11 Oct Nov 2019", FileItem.Type.Monthly));
