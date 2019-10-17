@@ -148,7 +148,10 @@ public class Utils {
 
         // now has year and has month
         int m = month.get(0)[1];
-        if (type.equals(FileItem.Type.Monthly)) {
+        if (type.equals(FileItem.Type.Quarterly)) {
+            return year[1] + "Q" + ((m - 1) / 3 + 1);
+        }
+        else if (type.equals(FileItem.Type.Monthly)) {
             String s = year[1] + (m < 10 ? "0" : "") + m;
             if (month.size() > 1) {
                 // month range

@@ -68,6 +68,27 @@ class UtilsTest {
 
         assertEquals("201910-11", Utils.guessDateFromFilename("Oct Nov 2019", FileItem.Type.Monthly));
         assertEquals("201910-11", Utils.guessDateFromFilename("11 Oct Nov 2019", FileItem.Type.Monthly));
+
+        assertEquals("2019Q1", Utils.guessDateFromFilename("1 2019", FileItem.Type.Quarterly));
+        assertEquals("2019Q1", Utils.guessDateFromFilename("2 2019", FileItem.Type.Quarterly));
+        assertEquals("2019Q1", Utils.guessDateFromFilename("3 2019", FileItem.Type.Quarterly));
+        assertEquals("2019Q2", Utils.guessDateFromFilename("4 2019", FileItem.Type.Quarterly));
+        assertEquals("2019Q2", Utils.guessDateFromFilename("5 2019", FileItem.Type.Quarterly));
+        assertEquals("2019Q2", Utils.guessDateFromFilename("6 2019", FileItem.Type.Quarterly));
+        assertEquals("2019Q3", Utils.guessDateFromFilename("7 2019", FileItem.Type.Quarterly));
+        assertEquals("2019Q3", Utils.guessDateFromFilename("8 2019", FileItem.Type.Quarterly));
+        assertEquals("2019Q3", Utils.guessDateFromFilename("9 2019", FileItem.Type.Quarterly));
+        assertEquals("2019Q4", Utils.guessDateFromFilename("10 2019", FileItem.Type.Quarterly));
+        assertEquals("2019Q4", Utils.guessDateFromFilename("11 2019", FileItem.Type.Quarterly));
+        assertEquals("2019Q4", Utils.guessDateFromFilename("12 2019", FileItem.Type.Quarterly));
+        assertEquals("2019Q1", Utils.guessDateFromFilename("11 Jan 2019", FileItem.Type.Quarterly));
+        assertEquals("2019Q1", Utils.guessDateFromFilename("11 Mar 2019", FileItem.Type.Quarterly));
+        assertEquals("2019Q2", Utils.guessDateFromFilename("11 Apr 2019", FileItem.Type.Quarterly));
+        assertEquals("2019Q2", Utils.guessDateFromFilename("11 Jun 2019", FileItem.Type.Quarterly));
+        assertEquals("2019Q3", Utils.guessDateFromFilename("11 Jul 2019", FileItem.Type.Quarterly));
+        assertEquals("2019Q3", Utils.guessDateFromFilename("11 Sep 2019", FileItem.Type.Quarterly));
+        assertEquals("2019Q4", Utils.guessDateFromFilename("11 Oct 2019", FileItem.Type.Quarterly));
+        assertEquals("2019Q4", Utils.guessDateFromFilename("11 Dec 2019", FileItem.Type.Quarterly));
     }
 
     private String helperTestFuzzyIndexOf(String str, String match) {
