@@ -47,7 +47,7 @@ public class FileOperationDialog extends Dialog {
 
     private static final int OPER_PREV_NEXT = 1;
     private static final int OPER_EXTEND_REDUCE = 2;
-    private static final int OPER_WEEKLY = 11;
+    //private static final int OPER_WEEKLY = 11;
     private static final int OPER_MONTHLY = 12;
     private static final int OPER_QUARTERLY = 13;
 
