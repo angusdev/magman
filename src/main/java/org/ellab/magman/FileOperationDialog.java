@@ -7,7 +7,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Comparator;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -43,6 +45,15 @@ public class FileOperationDialog extends Dialog {
     private static final int COL_DEST = 3;
     private static final int COL_STATUS = 4;
 
+    private static final int OPER_PREV_NEXT = 1;
+    private static final int OPER_EXTEND_REDUCE = 2;
+    private static final int OPER_WEEKLY = 11;
+    private static final int OPER_MONTHLY = 12;
+    private static final int OPER_QUARTERLY = 13;
+
+    private static int[] MONTH_TO_QUARTER = { 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4 };
+    private static int[] QUARTER_TO_MONTH = { 0, 3, 6, 9, 12 };
+
     public static class Item {
         private String path;
         private MagazineCollection mc;
@@ -69,10 +80,12 @@ public class FileOperationDialog extends Dialog {
     private TableColumn tblclmnTo;
     private TableColumn tblclmnStatus;
 
-    private Button btnPrevMonth;
-    private Button btnNextMonth;
+    private Button btnPrev;
+    private Button btnNext;
     private Button btnMonthly;
-    private Button btnBiMonthly;
+    private Button btnQuarterly;
+    private Button btnExtend;
+    private Button btnReduce;
 
     public FileOperationDialog(Shell parent, int style) {
         super(parent, style);
@@ -178,71 +191,96 @@ public class FileOperationDialog extends Dialog {
         tblclmnStatus.setWidth(100);
         tblclmnStatus.setText("Status");
 
-        Composite composite_1 = new Composite(shell, SWT.NONE);
-        composite_1.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false, 1, 1));
-        composite_1.setLayout(new RowLayout(SWT.HORIZONTAL));
+        Composite compositeDateButtons = new Composite(shell, SWT.NONE);
+        compositeDateButtons.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false, 1, 1));
+        compositeDateButtons.setLayout(new RowLayout(SWT.HORIZONTAL));
 
-        btnPrevMonth = new Button(composite_1, SWT.NONE);
-        btnPrevMonth.addSelectionListener(new SelectionAdapter() {
+        btnPrev = new Button(compositeDateButtons, SWT.NONE);
+        btnPrev.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                processMonthly(1, -1);
+                processDate(OPER_PREV_NEXT, -1);
             }
         });
-        btnPrevMonth.setEnabled(false);
-        btnPrevMonth.setText("Prev Month");
+        btnPrev.setEnabled(false);
+        btnPrev.setText("&Prev");
 
-        btnNextMonth = new Button(composite_1, SWT.NONE);
-        btnNextMonth.addSelectionListener(new SelectionAdapter() {
+        btnNext = new Button(compositeDateButtons, SWT.NONE);
+        btnNext.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                processMonthly(1, 1);
+                processDate(OPER_PREV_NEXT, 1);
             }
         });
-        btnNextMonth.setEnabled(false);
-        btnNextMonth.setText("Next Month");
+        btnNext.setEnabled(false);
+        btnNext.setText("&Next");
 
-        btnMonthly = new Button(composite_1, SWT.NONE);
+        btnReduce = new Button(compositeDateButtons, SWT.NONE);
+        btnReduce.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                processDate(OPER_EXTEND_REDUCE, -1);
+            }
+        });
+        btnReduce.setEnabled(false);
+        btnReduce.setText("Re&duce");
+
+        btnExtend = new Button(compositeDateButtons, SWT.NONE);
+        btnExtend.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                processDate(OPER_EXTEND_REDUCE, 1);
+            }
+        });
+        btnExtend.setEnabled(false);
+        btnExtend.setText("&Extend");
+
+        Label lblSep1 = new Label(compositeDateButtons, SWT.SEPARATOR | SWT.VERTICAL);
+        RowData layoutDataSep1 = new RowData();
+        layoutDataSep1.height = btnPrev.computeSize(SWT.DEFAULT, SWT.DEFAULT).y;
+        lblSep1.setLayoutData(layoutDataSep1);
+
+        btnMonthly = new Button(compositeDateButtons, SWT.NONE);
         btnMonthly.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                processMonthly(2, null);
+                processDate(OPER_MONTHLY, null);
             }
         });
         btnMonthly.setEnabled(false);
         btnMonthly.setText("Monthly");
 
-        btnBiMonthly = new Button(composite_1, SWT.NONE);
-        btnBiMonthly.addSelectionListener(new SelectionAdapter() {
+        btnQuarterly = new Button(compositeDateButtons, SWT.NONE);
+        btnQuarterly.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                processMonthly(3, null);
+                processDate(OPER_QUARTERLY, null);
             }
         });
-        btnBiMonthly.setEnabled(false);
-        btnBiMonthly.setText("Bi-monthly");
+        btnQuarterly.setEnabled(false);
+        btnQuarterly.setText("&Quarterly");
 
-        Label lblSep = new Label(composite_1, SWT.SEPARATOR | SWT.VERTICAL);
-        RowData layoutData = new RowData();
-        layoutData.height = btnPrevMonth.computeSize(SWT.DEFAULT, SWT.DEFAULT).y;
-        lblSep.setLayoutData(layoutData);
+        Label lblSep2 = new Label(compositeDateButtons, SWT.SEPARATOR | SWT.VERTICAL);
+        RowData layoutDataSep2 = new RowData();
+        layoutDataSep2.height = btnPrev.computeSize(SWT.DEFAULT, SWT.DEFAULT).y;
+        lblSep2.setLayoutData(layoutDataSep2);
 
-        Button btnReset = new Button(composite_1, SWT.NONE);
-        btnReset.addSelectionListener(new SelectionAdapter() {
+        Button btnResetAll = new Button(compositeDateButtons, SWT.NONE);
+        btnResetAll.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 Arrays.stream(table.getItems()).forEach(i -> {
                     Item item = (Item) i.getData();
                     item.type = item.oritype;
                     item.dest = item.oridest;
-                    i.setText(COL_FREQ, ((Item) i.getData()).type.toString());
-                    i.setText(COL_DEST, ((Item) i.getData()).dest);
+                    i.setText(COL_FREQ, item.type != null ? item.type.toString() : "");
+                    i.setText(COL_DEST, item.dest != null ? item.dest : "");
                 });
                 tblclmnFreq.pack();
                 tblclmnTo.pack();
             }
         });
-        btnReset.setText("Reset");
+        btnResetAll.setText("Rese&t All");
 
         Composite composite = new Composite(shell, SWT.NONE);
         FillLayout fl_composite = new FillLayout(SWT.HORIZONTAL);
@@ -286,96 +324,215 @@ public class FileOperationDialog extends Dialog {
     }
 
     private void onTableSelected(SelectionEvent e) {
-        btnPrevMonth.setEnabled(false);
-        btnNextMonth.setEnabled(false);
+        btnPrev.setEnabled(false);
+        btnNext.setEnabled(false);
+        btnReduce.setEnabled(false);
+        btnExtend.setEnabled(false);
         btnMonthly.setEnabled(false);
-        btnBiMonthly.setEnabled(false);
+        btnQuarterly.setEnabled(false);
 
         if (Arrays.stream(table.getSelection()).anyMatch(i -> ((Item) i.getData()).type != null)) {
-            btnPrevMonth.setEnabled(true);
-            btnNextMonth.setEnabled(true);
+            btnPrev.setEnabled(true);
+            btnNext.setEnabled(true);
+            btnReduce.setEnabled(true);
+            btnExtend.setEnabled(true);
             btnMonthly.setEnabled(true);
-            btnBiMonthly.setEnabled(true);
+            btnQuarterly.setEnabled(true);
         }
     };
 
-    /**
-     * Process the monthly filename.
-     * 
-     * @param action
-     *            1 - add / minus month, 2 - change to monthly, 3 - change to bi-monthly
-     */
-    private void processMonthly(int action, Integer add) {
-        final Pattern patternMonthly = Pattern.compile("(.*\\s)(\\d{4})(\\d{2})(\\-(\\d{2}))?(\\.[^\\.]+)$");
-        Arrays.stream(table.getSelection()).filter(i -> FileItem.Type.Monthly.equals(((Item) i.getData()).type))
-                .forEach(i -> {
-                    Item it = (Item) i.getData();
-                    Matcher m = patternMonthly.matcher(it.dest);
-                    if (m.matches()) {
-                        final String prefix = m.group(1);
-                        String year = m.group(2);
-                        int m1 = Integer.parseInt(m.group(3));
-                        int m2 = m.group(5) != null ? Integer.parseInt(m.group(5)) : -1;
-                        final String ext = m.group(6);
-                        if (action == 1) {
-                            m1 = m1 + add;
-                            m2 = m2 > 0 ? m2 + add : m2;
-                            if (m1 <= 0) {
-                                year = "" + (Integer.parseInt(year) - 1);
-                                m1 = 12;
-                            }
-                            else if (m1 >= 13) {
-                                year = "" + (Integer.parseInt(year) + 1);
-                                m1 = 1;
-                            }
-                            if (m2 == 0) {
-                                m2 = 12;
-                            }
-                            else if (m2 >= 13) {
-                                m2 = 1;
-                            }
-                            it.dest = prefix + year + (m1 < 10 ? "0" : "") + m1
-                                    + (m2 > 0 ? ("-" + (m2 < 10 ? "0" : "") + m2) : "") + ext;
-                            i.setText(COL_DEST, it.dest);
-                        }
-                        else if (action == 2) {
-                            it.dest = prefix + year + (m1 < 10 ? "0" : "") + m1 + ext;
-                            i.setText(COL_DEST, it.dest);
-                        }
-                        else if (action == 3) {
-                            if (m2 < 0) {
-                                m2 = m1 + 1;
-                                if (m2 >= 13) {
-                                    m2 = 1;
-                                }
-                                it.dest = prefix + year + (m1 < 10 ? "0" : "") + m1
-                                        + (m2 > 0 ? ("-" + (m2 < 10 ? "0" : "") + m2) : "") + ext;
-                                i.setText(COL_DEST, it.dest);
-                            }
-                        }
-                    }
-                });
+    private static String padzero(final int i) {
+        return (i < 10 ? "0" : "") + i;
+    }
 
-        final Pattern patternWeekly = Pattern.compile("(.*\\s)(\\d{4})(\\d{2})(\\d{2})?(\\.[^\\.]+)$");
-        Arrays.stream(table.getSelection()).filter(i -> FileItem.Type.Weekly.equals(((Item) i.getData()).type))
-                .forEach(i -> {
-                    Item it = (Item) i.getData();
-                    Matcher m = patternWeekly.matcher(it.dest);
-                    if (m.matches()) {
-                        final String prefix = m.group(1);
-                        String year = m.group(2);
-                        int m1 = Integer.parseInt(m.group(3));
-                        final String ext = m.group(5);
-                        if (action == 2) {
-                            it.type = FileItem.Type.Monthly;
-                            i.setText(COL_FREQ, it.type.toString());
-                            it.dest = prefix + year + (m1 < 10 ? "0" : "") + m1 + ext;
-                            i.setText(COL_DEST, it.dest);
-                        }
-                    }
-                });
+    private static int[] normalizeMonth(final int year, final int month) {
+        if (month <= 0) {
+            return new int[] { year - 1, 12 };
+        }
+        else if (month > 12) {
+            return new int[] { year + 1, 1 };
+        }
+        else {
+            return new int[] { year, month };
+        }
+    }
+
+    private static int[] normalizeQuarter(final int year, final int quarter) {
+        if (quarter <= 0) {
+            return new int[] { year - 1, 4 };
+        }
+        else if (quarter > 4) {
+            return new int[] { year + 1, 1 };
+        }
+        else {
+            return new int[] { year, quarter };
+        }
+    }
+
+    private static String calendarToYYYYMMDD(Calendar c) {
+        return c.get(Calendar.YEAR) + padzero(c.get(Calendar.MONTH) + 1) + padzero(c.get(Calendar.DAY_OF_MONTH));
+    }
+
+    private void processDate(int action, Integer offset) {
+        table.setRedraw(false);
+        for (TableItem ti : table.getSelection()) {
+            Item i = (Item) ti.getData();
+            if (i.type == null) {
+                continue;
+            }
+            else if (FileItem.Type.Weekly.equals(i.type) || FileItem.Type.Biweekly.equals(i.type)) {
+                processWeekly(ti, action, offset);
+            }
+            else if (FileItem.Type.Monthly.equals(i.type)) {
+                processMonthly(ti, action, offset);
+            }
+            else if (FileItem.Type.Quarterly.equals(i.type)) {
+                processQuarterly(ti, action, offset);
+            }
+            ti.setText(COL_FREQ, i.type != null ? i.type.toString() : "");
+            ti.setText(COL_DEST, i.dest);
+        }
         tblclmnFreq.pack();
         tblclmnTo.pack();
+        table.setRedraw(true);
+    }
+
+    private void processWeekly(TableItem ti, int action, Integer offset) {
+        final Pattern patternWeekly = Pattern
+                .compile("(.*\\s)(\\d{4})(\\d{2})(\\d{2})(\\-(\\d{4})(\\d{2})(\\d{2}))?(\\.[^\\.]+)$");
+        Item it = (Item) ti.getData();
+        Matcher m = patternWeekly.matcher(it.dest);
+        if (m.matches()) {
+            final String prefix = m.group(1);
+            int y1 = Integer.parseInt(m.group(2));
+            int m1 = Integer.parseInt(m.group(3));
+            int d1 = Integer.parseInt(m.group(4));
+            int y2 = m.group(6) != null ? Integer.parseInt(m.group(6)) : -1;
+            int m2 = m.group(7) != null ? Integer.parseInt(m.group(7)) : -1;
+            int d2 = m.group(8) != null ? Integer.parseInt(m.group(8)) : -1;
+            final String ext = m.group(9);
+
+            if (action == OPER_PREV_NEXT) {
+                Calendar c1 = GregorianCalendar.getInstance();
+                c1.set(Calendar.YEAR, y1);
+                c1.set(Calendar.MONTH, m1 - 1);
+                c1.set(Calendar.DAY_OF_MONTH, d1);
+                c1.add(Calendar.DAY_OF_MONTH, offset * 7);
+
+                Calendar c2 = null;
+                if (y2 > 0) {
+                    c2 = GregorianCalendar.getInstance();
+                    c2.set(Calendar.YEAR, y2);
+                    c2.set(Calendar.MONTH, m2 - 1);
+                    c2.set(Calendar.DAY_OF_MONTH, d2);
+                    c2.add(Calendar.DAY_OF_MONTH, offset * 7);
+                }
+
+                it.dest = prefix + calendarToYYYYMMDD(c1) + (c2 != null ? ("-" + calendarToYYYYMMDD(c2)) : "") + ext;
+            }
+            else if (action == OPER_EXTEND_REDUCE) {
+                if (y2 <= 0) {
+                    if (offset < 0) {
+                        // no y2,m2,d2, will not reduce
+                        return;
+                    }
+                    y2 = y1;
+                    m2 = m1;
+                    d2 = d1;
+                }
+                Calendar c1 = GregorianCalendar.getInstance();
+                c1.set(Calendar.YEAR, y1);
+                c1.set(Calendar.MONTH, m1 - 1);
+                c1.set(Calendar.DAY_OF_MONTH, d1);
+                Calendar c2 = GregorianCalendar.getInstance();
+                c2.set(Calendar.YEAR, y2);
+                c2.set(Calendar.MONTH, m2 - 1);
+                c2.set(Calendar.DAY_OF_MONTH, d2);
+                c2.add(Calendar.DAY_OF_MONTH, offset * 7);
+
+                if (c2.compareTo(c1) > 0) {
+                    it.dest = prefix + calendarToYYYYMMDD(c1) + "-" + calendarToYYYYMMDD(c2) + ext;
+                }
+                else {
+                    it.dest = prefix + calendarToYYYYMMDD(c1) + ext;
+                }
+            }
+            if (action == OPER_MONTHLY) {
+                it.type = FileItem.Type.Monthly;
+                it.dest = prefix + y1 + padzero(m1) + ext;
+            }
+            else if (action == OPER_QUARTERLY) {
+                it.type = FileItem.Type.Quarterly;
+                it.dest = prefix + y1 + "Q" + MONTH_TO_QUARTER[m1] + ext;
+            }
+        }
+    }
+
+    private void processMonthly(TableItem ti, int action, Integer offset) {
+        final Pattern patternMonthly = Pattern.compile("(.*\\s)(\\d{4})(\\d{2})(\\-(\\d{2}))?(\\.[^\\.]+)$");
+        Item it = (Item) ti.getData();
+        Matcher m = patternMonthly.matcher(it.dest);
+        if (m.matches()) {
+            final String prefix = m.group(1);
+            int y1 = Integer.parseInt(m.group(2));
+            int m1 = Integer.parseInt(m.group(3));
+            int m2 = m.group(5) != null ? Integer.parseInt(m.group(5)) : -1;
+            final String ext = m.group(6);
+
+            if (action == OPER_PREV_NEXT) {
+                int[] ym = normalizeMonth(y1, m1 + offset);
+                m2 = m2 > 0 ? normalizeMonth(y1, m2 + offset)[1] : m2;
+                it.dest = prefix + ym[0] + padzero(ym[1]) + (m2 > 0 ? "-" + padzero(m2) : "") + ext;
+            }
+            else if (action == OPER_EXTEND_REDUCE) {
+                // if no m2, only extend but no reduce, otherwise 201910 will become 201910-09
+                m2 = normalizeMonth(y1, m2 > 0 ? m2 + offset : (offset > 0 ? (m1 + offset) : m1))[1];
+                if (m2 != m1) {
+                    it.dest = prefix + y1 + padzero(m1) + "-" + padzero(m2) + ext;
+                }
+                else {
+                    it.dest = prefix + y1 + padzero(m1) + ext;
+                }
+            }
+            else if (action == OPER_QUARTERLY) {
+                it.type = FileItem.Type.Quarterly;
+                it.dest = prefix + y1 + "Q" + MONTH_TO_QUARTER[m1] + ext;
+            }
+        }
+
+    }
+
+    private void processQuarterly(TableItem ti, int action, Integer offset) {
+        final Pattern patternQuarterly = Pattern.compile("(.*\\s)(\\d{4})Q([1-4])(\\-([1-4]))?(\\.[^\\.]+)$");
+        Item it = (Item) ti.getData();
+        Matcher m = patternQuarterly.matcher(it.dest);
+        if (m.matches()) {
+            final String prefix = m.group(1);
+            int y1 = Integer.parseInt(m.group(2));
+            int q1 = Integer.parseInt(m.group(3));
+            int q2 = m.group(5) != null ? Integer.parseInt(m.group(5)) : -1;
+            final String ext = m.group(6);
+
+            if (action == OPER_PREV_NEXT) {
+                int[] yq = normalizeQuarter(y1, q1 + offset);
+                q2 = q2 > 0 ? normalizeQuarter(y1, q2 + offset)[1] : q2;
+                it.dest = prefix + yq[0] + "Q" + yq[1] + (q2 > 0 ? "-" + q2 : "") + ext;
+            }
+            else if (action == OPER_EXTEND_REDUCE) {
+                // if no q2, only extend but no reduce, otherwise 2019Q4 will become 2019Q4-3
+                q2 = normalizeQuarter(y1, q2 > 0 ? q2 + offset : (offset > 0 ? (q1 + offset) : q1))[1];
+                if (q2 != q1) {
+                    it.dest = prefix + y1 + "Q" + q1 + "-" + normalizeQuarter(y1, q2)[1] + ext;
+                }
+                else {
+                    it.dest = prefix + y1 + "Q" + q1 + ext;
+                }
+            }
+            else if (action == OPER_MONTHLY) {
+                it.type = FileItem.Type.Monthly;
+                it.dest = prefix + y1 + padzero(QUARTER_TO_MONTH[q1]) + ext;
+            }
+        }
     }
 
     private void renameFiles() {
