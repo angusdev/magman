@@ -15,6 +15,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Point;
@@ -47,7 +49,7 @@ public class FileOperationDialog extends Dialog {
 
     private static final int OPER_PREV_NEXT = 1;
     private static final int OPER_EXTEND_REDUCE = 2;
-    //private static final int OPER_WEEKLY = 11;
+    // private static final int OPER_WEEKLY = 11;
     private static final int OPER_MONTHLY = 12;
     private static final int OPER_QUARTERLY = 13;
 
@@ -161,6 +163,26 @@ public class FileOperationDialog extends Dialog {
         shell.setLayout(new GridLayout(1, false));
 
         table = new Table(shell, SWT.BORDER | SWT.CHECK | SWT.FULL_SELECTION | SWT.MULTI);
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseDoubleClick(MouseEvent e) {
+                Point point = new Point(e.x, e.y);
+                TableItem ti = table.getItem(point);
+                if (ti != null) {
+                    try {
+                        String path = ((Item) ti.getData()).path;
+                        if (path.toLowerCase().endsWith(".pdf")) {
+                            new PreviewDialog(shell,
+                                    SWT.APPLICATION_MODAL | SWT.TITLE | SWT.RESIZE | SWT.CLOSE | SWT.MAX | SWT.MIN)
+                                            .open(path);
+                        }
+                    }
+                    catch (IOException ex) {
+                        SwtUtils.errorBox(shell, ex);
+                    }
+                }
+            }
+        });
         table.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
