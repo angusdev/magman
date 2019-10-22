@@ -41,18 +41,31 @@ public class Utils {
     // check if the file name matches with the magazine name
     // e.g. Java Official = Java Official 2019 July.pdf
     // also Java Official = Official Java 2019 July.pdf
-    public static int[] fuzzyIndexOf(final String str, final String match) {
+    public static int[] fuzzyIndexOf(String str, String match) {
+        str = str.toUpperCase();
+        match = match.toUpperCase();
+
         int[] result = indexOfWord(str, match);
         if (result != null) {
             return result;
         }
 
         final String[] splited = match.split(" ");
-        if (splited.length != 2) {
-            return null;
+        if (splited.length == 2) {
+            result = indexOfWord(str, splited[1] + " " + splited[0]);
+            if (result != null) {
+                return result;
+            }
         }
 
-        return indexOfWord(str, splited[1] + " " + splited[0]);
+        if (str.indexOf(" & ") > 0 && match.indexOf(" AND ") > 0) {
+            return fuzzyIndexOf(str.replace(" & ", " AND "), match);
+        }
+        else if (str.indexOf(" AND ") > 0 && match.indexOf(" &") > 0) {
+            return fuzzyIndexOf(str.replace(" AND ", " & "), match);
+        }
+
+        return null;
     }
 
     public static String guessDateFromFilename(final String name, final FileItem.Type type) {
