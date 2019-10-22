@@ -39,6 +39,8 @@ import org.eclipse.swt.dnd.DND;
 public class PreviewDialog extends Dialog {
     private static final float ZOOM_STEP = 0.2f;
     private static final float MAX_ZOOM = 4;
+    private static final float PREV_PAGE_AREA = 0.1f;
+    private static final float NEXT_PAGE_AREA = 0.9f;
 
     protected Shell shell;
 
@@ -69,11 +71,12 @@ public class PreviewDialog extends Dialog {
         previewCanvas = new ImageViewerCanvas(canvasPreview).withWheelZoomStep(ZOOM_STEP).withMaxZoom(MAX_ZOOM)
                 .addListener(new ImageViewerCanvasAdapter() {
                     @Override
-                    public void changePage(ImageViewerCanvas c, int offset) {
-                        if (offset == ImageViewerCanvas.PREV_PAGE) {
+                    public void click(ImageViewerCanvas c, int x, int y) {
+                        Rectangle rect = canvasPreview.getBounds();
+                        if (x <= rect.width * PREV_PAGE_AREA) {
                             previewChangePage(PDFPreview.PREV_PAGE);
                         }
-                        else if (offset == ImageViewerCanvas.NEXT_PAGE) {
+                        else if (x >= rect.width * NEXT_PAGE_AREA) {
                             previewChangePage(PDFPreview.NEXT_PAGE);
                         }
                     }

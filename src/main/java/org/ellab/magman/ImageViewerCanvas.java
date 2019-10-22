@@ -33,9 +33,6 @@ public class ImageViewerCanvas {
     private static final int MOUSE_CLICK_MOVE_THERSHOLD = 5;
     private static final int MOUSE_CLICK_TIME_THERSHOLD_MS = 200;
 
-    private static final float PREV_PAGE_AREA = 0.1f;
-    private static final float NEXT_PAGE_AREA = 0.9f;
-
     private ImageViewerCanvas me;
     private Canvas canvas;
 
@@ -68,7 +65,7 @@ public class ImageViewerCanvas {
     private List<ImageViewerCanvasAdapter> listener = new ArrayList<>();
 
     public static class ImageViewerCanvasAdapter {
-        public void changePage(ImageViewerCanvas c, int offset) {
+        public void click(ImageViewerCanvas c, int x, int y) {
         }
     }
 
@@ -113,14 +110,7 @@ public class ImageViewerCanvas {
                 mouseDownTime = 0;
 
                 if (isClick) {
-                    Rectangle rect = canvas.getBounds();
-                    if (start.x <= rect.width * PREV_PAGE_AREA) {
-                        listener.stream().forEach(a -> a.changePage(me, PREV_PAGE));
-                    }
-                    else if (start.x >= rect.width * NEXT_PAGE_AREA) {
-                        listener.stream().forEach(a -> a.changePage(me, NEXT_PAGE));
-                    }
-
+                    listener.stream().forEach(a -> a.click(me, start.x, start.y));
                     return;
                 }
 
