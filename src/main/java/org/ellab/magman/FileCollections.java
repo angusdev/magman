@@ -251,7 +251,7 @@ public class FileCollections {
                 ? oriName.substring(oriName.lastIndexOf('.') + 1, oriName.length()).toLowerCase()
                 : null;
         String name = oriName.replaceFirst("[.][^.]+$", "");
-        name = name.replaceAll("[\\.\\-+=_,;]", " ").replaceAll("\\s\\s+", " ");
+        name = name.replaceAll("[\\.\\(\\)\\[\\]\\-+=_,;]", " ").replaceAll("\\s\\s+", " ");
         name = name.toUpperCase();
 
         final String searchName = name;
