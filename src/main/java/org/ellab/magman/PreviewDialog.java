@@ -29,6 +29,12 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.ellab.magman.ImageViewerCanvas.ImageViewerCanvasAdapter;
+import org.eclipse.swt.dnd.DropTarget;
+import org.eclipse.swt.dnd.DropTargetAdapter;
+import org.eclipse.swt.dnd.DropTargetEvent;
+import org.eclipse.swt.dnd.FileTransfer;
+import org.eclipse.swt.dnd.Transfer;
+import org.eclipse.swt.dnd.DND;
 
 public class PreviewDialog extends Dialog {
     private static final float ZOOM_STEP = 0.2f;
@@ -86,32 +92,25 @@ public class PreviewDialog extends Dialog {
         int locationY = (parentSize.height - shellSize.height) / 2 + parentSize.y;
         shell.setLocation(new Point(locationX, locationY));
 
-        shell.layout();
-
-        lblPreview.setText("Loading " + file + "...");
-
-        enableNavigation(false);
-        previewThread = new Thread(new Runnable() {
+        DropTarget dropTarget = new DropTarget(shell, DND.DROP_MOVE);
+        final FileTransfer fileTransfer = FileTransfer.getInstance();
+        Transfer[] types = new Transfer[] { fileTransfer };
+        dropTarget.setTransfer(types);
+        dropTarget.addDropListener(new DropTargetAdapter() {
             @Override
-            public void run() {
-                try {
-                    preview.load(file);
-
-                    shell.getDisplay().asyncExec(new Runnable() {
-                        @Override
-                        public void run() {
-                            lblPreview.setVisible(false);
-                            previewChangePage(PDFPreview.FIRST_PAGE);
-                            enableNavigation(true);
-                        }
-                    });
-                }
-                catch (IOException ex) {
-                    ex.printStackTrace();
+            public void drop(DropTargetEvent event) {
+                if (fileTransfer.isSupportedType(event.currentDataType)) {
+                    String[] files = (String[]) event.data;
+                    if (files.length > 0 && files[0].toLowerCase().endsWith(".pdf")) {
+                        openFile(files[0]);
+                    }
                 }
             }
         });
-        previewThread.start();
+
+        shell.layout();
+
+        openFile(file);
 
         Display display = getParent().getDisplay();
         while (!shell.isDisposed()) {
@@ -225,6 +224,34 @@ public class PreviewDialog extends Dialog {
 
         lblPreview = new CLabel(canvasPreview, SWT.NONE);
         lblPreview.setAlignment(SWT.CENTER);
+    }
+
+    private void openFile(final String file) {
+        lblPreview.setText("Loading " + file + "...");
+
+        enableNavigation(false);
+        previewThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    preview.load(file);
+
+                    shell.getDisplay().asyncExec(new Runnable() {
+                        @Override
+                        public void run() {
+                            lblPreview.setVisible(false);
+                            previewChangePage(PDFPreview.FIRST_PAGE);
+                            enableNavigation(true);
+                        }
+                    });
+                }
+                catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+        previewThread.start();
+
     }
 
     private void enableNavigation(boolean enabled) {
