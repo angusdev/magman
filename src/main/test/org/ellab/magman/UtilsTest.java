@@ -133,6 +133,15 @@ class UtilsTest {
         assertEquals("four three", helperTestFuzzyIndexOf("one two four three", "three four"));
         assertEquals("three four", helperTestFuzzyIndexOf("one two three four", "three four"));
         assertNull(helperTestFuzzyIndexOf("four one two three", "three four"));
+
+        assertEquals("two and three", helperTestFuzzyIndexOf("one two and three four", "two and three"));
+        assertEquals("two and three", helperTestFuzzyIndexOf("one two and three four", "two & three"));
+        assertEquals("two and three", helperTestFuzzyIndexOf("one two and three four", "two and three"));
+        assertEquals("two and three", helperTestFuzzyIndexOf("one two and three four", "two & three"));
+        assertEquals("two & three", helperTestFuzzyIndexOf("one two & three four", "two and three"));
+        assertEquals("two & three", helperTestFuzzyIndexOf("one two & three four", "two & three"));
+        assertEquals("two & three", helperTestFuzzyIndexOf("one two & three four", "two and three"));
+        assertEquals("two & three", helperTestFuzzyIndexOf("one two & three four", "two & three"));
     }
 
 }

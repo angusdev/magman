@@ -61,7 +61,6 @@ public class Utils {
                 for (int j = i + 2; j < splited.length; j++) {
                     rearranged += " " + splited[j];
                 }
-                System.out.println(rearranged);
                 result = indexOfWord(rearranged, substr);
                 if (result != null) {
                     return result;
@@ -71,13 +70,17 @@ public class Utils {
         }
 
         if (str.indexOf(" & ") > 0 && substr.indexOf(" AND ") > 0) {
-            return fuzzyIndexOf(str.replace(" & ", " AND "), substr);
+            result = fuzzyIndexOf(str.replace(" & ", " AND "), substr);
+            // adjust the length as it is replaced
+            result[1] -= 2;
         }
         else if (str.indexOf(" AND ") > 0 && substr.indexOf(" &") > 0) {
-            return fuzzyIndexOf(str.replace(" AND ", " & "), substr);
+            result = fuzzyIndexOf(str.replace(" AND ", " & "), substr);
+            // adjust the length as it is replaced
+            result[1] += 2;
         }
 
-        return null;
+        return result;
     }
 
     public static String guessDateFromFilename(final String name, final FileItem.Type type) {
