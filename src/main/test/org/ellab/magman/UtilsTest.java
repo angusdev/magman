@@ -117,12 +117,22 @@ class UtilsTest {
         assertEquals("abc def", helperTestFuzzyIndexOf("x abc def", "abc def"));
         assertEquals("abc def", helperTestFuzzyIndexOf("abc def y", "abc def"));
         assertEquals("abc def", helperTestFuzzyIndexOf("x abc def y", "abc def"));
-        assertEquals("abc def", helperTestFuzzyIndexOf("abc def", "def abc"));
-        assertEquals("abc def", helperTestFuzzyIndexOf("x abc def", "def abc"));
-        assertEquals("abc def", helperTestFuzzyIndexOf("abc def y", "def abc"));
-        assertEquals("abc def", helperTestFuzzyIndexOf("x abc def y", "def abc"));
+        assertEquals("def abc", helperTestFuzzyIndexOf("def abc", "abc def"));
+        assertEquals("def abc", helperTestFuzzyIndexOf("x def abc", "abc def"));
+        assertEquals("def abc", helperTestFuzzyIndexOf("def abc y", "abc def"));
+        assertEquals("def abc", helperTestFuzzyIndexOf("x def abc y", "abc def"));
 
-        assertNull(helperTestFuzzyIndexOf("abc def ghi", "abc ghi def"));
+        assertEquals("two one three", helperTestFuzzyIndexOf("two one three", "one two three"));
+        assertEquals("one three two", helperTestFuzzyIndexOf("one three two", "one two three"));
+        assertNull(helperTestFuzzyIndexOf("three two one", "one two three"));
+
+        assertEquals("two one", helperTestFuzzyIndexOf("two one three four", "one two"));
+        assertEquals("one two", helperTestFuzzyIndexOf("one two three four", "one two"));
+        assertEquals("three two", helperTestFuzzyIndexOf("one three two four", "two three"));
+        assertEquals("two three", helperTestFuzzyIndexOf("one two three four", "two three"));
+        assertEquals("four three", helperTestFuzzyIndexOf("one two four three", "three four"));
+        assertEquals("three four", helperTestFuzzyIndexOf("one two three four", "three four"));
+        assertNull(helperTestFuzzyIndexOf("four one two three", "three four"));
     }
 
 }

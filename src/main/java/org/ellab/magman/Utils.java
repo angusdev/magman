@@ -25,14 +25,14 @@ public class Utils {
         }
     }
 
-    private static int[] indexOfWord(final String str, final String match) {
-        final int pos = str.indexOf(match + " ");
+    private static int[] indexOfWord(final String str, final String substr) {
+        final int pos = str.indexOf(substr + " ");
         if (pos >= 0) {
-            return new int[] { pos, pos + match.length() };
+            return new int[] { pos, pos + substr.length() };
         }
 
-        if (str.endsWith(match)) {
-            return new int[] { str.length() - match.length(), str.length() };
+        if (str.endsWith(substr)) {
+            return new int[] { str.length() - substr.length(), str.length() };
         }
 
         return null;
@@ -41,28 +41,40 @@ public class Utils {
     // check if the file name matches with the magazine name
     // e.g. Java Official = Java Official 2019 July.pdf
     // also Java Official = Official Java 2019 July.pdf
-    public static int[] fuzzyIndexOf(String str, String match) {
+    public static int[] fuzzyIndexOf(String str, String substr) {
         str = str.toUpperCase();
-        match = match.toUpperCase();
+        substr = substr.toUpperCase();
 
-        int[] result = indexOfWord(str, match);
+        int[] result = indexOfWord(str, substr);
         if (result != null) {
             return result;
         }
 
-        final String[] splited = match.split(" ");
-        if (splited.length == 2) {
-            result = indexOfWord(str, splited[1] + " " + splited[0]);
-            if (result != null) {
-                return result;
+        final String[] splited = str.split(" ");
+        if (splited.length > 1) {
+            for (int i = 0; i < splited.length - 1; i++) {
+                String rearranged = "";
+                for (int j = 0; j < i; j++) {
+                    rearranged += (j > 0 ? " " : "") + splited[j];
+                }
+                rearranged += (i > 0 ? " " : "") + splited[i + 1] + " " + splited[i];
+                for (int j = i + 2; j < splited.length; j++) {
+                    rearranged += " " + splited[j];
+                }
+                System.out.println(rearranged);
+                result = indexOfWord(rearranged, substr);
+                if (result != null) {
+                    return result;
+                }
+
             }
         }
 
-        if (str.indexOf(" & ") > 0 && match.indexOf(" AND ") > 0) {
-            return fuzzyIndexOf(str.replace(" & ", " AND "), match);
+        if (str.indexOf(" & ") > 0 && substr.indexOf(" AND ") > 0) {
+            return fuzzyIndexOf(str.replace(" & ", " AND "), substr);
         }
-        else if (str.indexOf(" AND ") > 0 && match.indexOf(" &") > 0) {
-            return fuzzyIndexOf(str.replace(" AND ", " & "), match);
+        else if (str.indexOf(" AND ") > 0 && substr.indexOf(" &") > 0) {
+            return fuzzyIndexOf(str.replace(" AND ", " & "), substr);
         }
 
         return null;
