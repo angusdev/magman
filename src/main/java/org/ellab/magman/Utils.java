@@ -65,8 +65,13 @@ public class Utils {
                 if (result != null) {
                     return result;
                 }
-
             }
+        }
+
+        String substrNoSpace = substr.replaceAll(" ", "");
+        result = indexOfWord(str, substrNoSpace);
+        if (result != null ) {
+            return result;
         }
 
         if (str.indexOf(" & ") > 0 && substr.indexOf(" AND ") > 0) {
