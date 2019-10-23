@@ -88,12 +88,15 @@ public class Utils {
         return result;
     }
 
-    public static String guessDateFromFilename(final String name, final FileItem.Type type) {
+    public static String guessDateFromFilename(String name, final FileItem.Type type) {
         // int[index, value, fromMonthName]
         int[] year = null;
         List<int[]> month = new ArrayList<>();
         List<int[]> day = new ArrayList<>();
         List<int[]> monthOrDay = new ArrayList<>();
+        
+        // insert space between number and word
+        name = name.replaceAll("(?<=[A-Za-z])(?=[0-9])|(?<=[0-9])(?=[A-Za-z])", " ");
 
         final String splited[] = name.split(" ");
         for (int i = 0; i < splited.length; i++) {

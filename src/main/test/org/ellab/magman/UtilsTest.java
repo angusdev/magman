@@ -49,6 +49,7 @@ class UtilsTest {
         assertEquals("20191008", Utils.guessDateFromFilename("8 Oct 2019", FileItem.Type.Weekly));
         assertEquals("20191011", Utils.guessDateFromFilename("11 Oct 2019", FileItem.Type.Weekly));
         assertEquals("20191011", Utils.guessDateFromFilename("11 October 2019", FileItem.Type.Weekly));
+        assertEquals("20191011", Utils.guessDateFromFilename("11Oct2019", FileItem.Type.Weekly));
         assertEquals("20191011", Utils.guessDateFromFilename("11 2019 Oct", FileItem.Type.Weekly));
         assertEquals("20191011", Utils.guessDateFromFilename("11 2019 October", FileItem.Type.Weekly));
         assertEquals("20191011", Utils.guessDateFromFilename("Oct 11 2019", FileItem.Type.Weekly));
@@ -64,6 +65,7 @@ class UtilsTest {
         assertEquals("201910", Utils.guessDateFromFilename("8 Oct 2019", FileItem.Type.Monthly));
         assertEquals("201910", Utils.guessDateFromFilename("11 Oct 2019", FileItem.Type.Monthly));
         assertEquals("201910", Utils.guessDateFromFilename("11 October 2019", FileItem.Type.Monthly));
+        assertEquals("201910", Utils.guessDateFromFilename("11Oct2019", FileItem.Type.Monthly));
         assertEquals("201910", Utils.guessDateFromFilename("8 10 2019", FileItem.Type.Monthly));
 
         assertEquals("201910-11", Utils.guessDateFromFilename("Oct Nov 2019", FileItem.Type.Monthly));
