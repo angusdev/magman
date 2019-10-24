@@ -1,7 +1,10 @@
 package org.ellab.magman;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -49,6 +52,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Link;
 import org.eclipse.swt.widgets.Listener;
@@ -367,6 +371,41 @@ public class SwtMain {
             }
         });
         mntmOpenPath.setText("&Open File Location");
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        MenuItem mntmExport = new MenuItem(menu, SWT.NONE);
+        mntmExport.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                FileDialog fd = new FileDialog(shell, SWT.SAVE);
+                fd.setText("Export to...");
+
+                String dir = txtDirectory.getText();
+                if (dir == null || dir.trim().length() == 0) {
+                    dir = File.listRoots()[0].getAbsolutePath();
+                }
+                fd.setFilterPath(dir);
+                fd.setFileName("magman.csv");
+                fd.setFilterExtensions(new String[] { "*.csv" });
+
+                String selected = fd.open();
+                if (selected != null) {
+                    try {
+                        if (!new File(selected).exists()
+                                || SwtUtils.messageBox(shell, SWT.ICON_WARNING | SWT.YES | SWT.NO,
+                                        "File already exist, confirm to overwrite?") == SWT.YES) {
+                            exportToCsv(selected);
+                            SwtUtils.messageBox(shell, SWT.ICON_INFORMATION, "File exported");
+                        }
+                    }
+                    catch (Exception ex) {
+                        SwtUtils.errorBox(shell, ex);
+                    }
+                }
+            }
+        });
+        mntmExport.setText("&Export");
 
         txtMessage = new Text(shell, SWT.BORDER | SWT.READ_ONLY | SWT.H_SCROLL | SWT.V_SCROLL | SWT.CANCEL | SWT.MULTI);
         txtMessage.setBackground(Display.getCurrent().getSystemColor(SWT.COLOR_LIST_BACKGROUND));
@@ -1001,6 +1040,42 @@ public class SwtMain {
         if (item != null) {
             tree.setTopItem(item);
             tree.setSelection(item);
+        }
+    }
+
+    private void exportToCsv(String file) throws IOException {
+        try (FileOutputStream fos = new FileOutputStream(new File(file));
+                BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos, Charset.forName("UTF8")))) {
+            // for excel
+            byte[] enc = new byte[] { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
+            fos.write(enc);
+
+            bw.write("Magazine,Path,Group,Date,Status");
+            bw.newLine();
+
+            for (TreeItem ti : tree.getItems()) {
+                MagazineCollection mc = (MagazineCollection) ti.getData();
+                for (TreeItem ti2 : ti.getItems()) {
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = -1; i < tree.getColumnCount(); i++) {
+                        // first column is the tree node name
+                        if (i >= 0) {
+                            sb.append(',');
+                        }
+                        String s = i < 0 ? mc.getName() : ti2.getText(i);
+                        s = s.replace("\"", "\\\"");
+                        if (s.contains(",")) {
+                            // need to add quote "
+                            sb.append('"').append(s).append('"');
+                        }
+                        else {
+                            sb.append(s);
+                        }
+                    }
+                    bw.write(sb.toString());
+                    bw.newLine();
+                }
+            }
         }
     }
 }
