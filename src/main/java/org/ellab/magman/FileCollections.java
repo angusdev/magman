@@ -288,7 +288,11 @@ public class FileCollections {
 
             final String guessedName = Utils.guessDateFromFilename(remainedName, type);
 
-            if (!guessedName.equals(remainedName)) {
+            if (guessedName.equals(remainedName)) {
+                // didn't convert to date, capitalize the remaining part
+                renameTo = prefix + " " + Utils.capitalize(remainedName) + "." + ext;
+            }
+            else {
                 renameTo = prefix + " " + guessedName + "." + ext;
             }
 

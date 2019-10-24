@@ -278,4 +278,30 @@ public class Utils {
 
         return s;
     }
+
+    public static String capitalize(final String str) {
+        if (str == null || str.length() == 0) {
+            return str;
+        }
+
+        boolean prevIsSpace = true;
+        char[] result = new char[str.length()];
+        for (int i = 0; i < str.length(); i++) {
+            char ch = str.charAt(i);
+            if (Character.toString(ch).trim().length() == 0) {
+                // is space
+                result[i] = ch;
+                prevIsSpace = true;
+            }
+            else if (prevIsSpace) {
+                result[i] = Character.toUpperCase(ch);
+                prevIsSpace = false;
+            }
+            else {
+                result[i] = Character.toLowerCase(ch);;
+            }
+        }
+
+        return new String(result);
+    }
 }
