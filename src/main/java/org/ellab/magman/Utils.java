@@ -5,11 +5,22 @@ import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Utils {
     private static final String[] MONTH_NAME = new String[] { "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
             "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER" };
+
+    private static final Map<String, Integer> QUARTER_NAME = new HashMap<>();
+    static {
+        QUARTER_NAME.put("SPRING", 1);
+        QUARTER_NAME.put("SUMMER", 2);
+        QUARTER_NAME.put("FALL", 3);
+        QUARTER_NAME.put("AUTUMN", 3);
+        QUARTER_NAME.put("WINTER", 4);
+    }
 
     public static boolean isValidYYYYMMDD(final String s) {
         if (!s.matches("^\\d{8}$")) {
@@ -70,7 +81,7 @@ public class Utils {
 
         String substrNoSpace = substr.replaceAll(" ", "");
         result = indexOfWord(str, substrNoSpace);
-        if (result != null ) {
+        if (result != null) {
             return result;
         }
 
@@ -89,12 +100,13 @@ public class Utils {
     }
 
     public static String guessDateFromFilename(String name, final FileItem.Type type) {
-        // int[index, value, fromMonthName]
+        // int[index, value, fromMonthName/fromQuarterName]
         int[] year = null;
         List<int[]> month = new ArrayList<>();
         List<int[]> day = new ArrayList<>();
         List<int[]> monthOrDay = new ArrayList<>();
-        
+        List<int[]> quarter = new ArrayList<>();
+
         // insert space between number and word
         name = name.replaceAll("(?<=[A-Za-z])(?=[0-9])|(?<=[0-9])(?=[A-Za-z])", " ");
 
@@ -114,6 +126,9 @@ public class Utils {
                 int strToMonth = Utils.strToMonth(s);
                 if (strToMonth > 0) {
                     month.add(new int[] { i, strToMonth, 1 });
+                }
+                else if (QUARTER_NAME.containsKey(s)) {
+                    quarter.add(new int[] { i, QUARTER_NAME.get(s), 1 });
                 }
                 else if (s.matches("^\\d{1,2}$")) {
                     final int value = Integer.parseInt(s);
@@ -150,6 +165,12 @@ public class Utils {
                     }
                 }
             }
+        }
+
+        // since there is quarter name, will treat it as quarter no matter what type is
+        // it is common to have quarter issue for monthly magazine
+        if (year != null && quarter.size() > 0) {
+            return year[1] + "Q" + quarter.get(0)[1] + (quarter.size() > 1 ? "-" + quarter.get(1)[1] : "");
         }
 
         if (year == null || (month.size() + day.size() + monthOrDay.size()) == 0) {
