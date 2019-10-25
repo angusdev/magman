@@ -740,7 +740,7 @@ public class SwtMain {
                         showMessage(SWT.ERROR, "The directory does not exist");
                         return;
                     }
-                    processDirectory(path, includeDir);
+                    refreshAll(path, includeDir);
                 }
                 catch (Exception ex) {
                     ex.printStackTrace();
@@ -748,6 +748,19 @@ public class SwtMain {
                 }
             }
         }.start();
+    }
+
+    private void refreshAll(final Path path, String includeDir) throws Exception {
+        processDirectory(path, includeDir);
+
+        fc.analysis();
+
+        display.asyncExec(new Runnable() {
+            @Override
+            public void run() {
+                refreshTree();
+            }
+        });
     }
 
     private void processDirectory(final Path path, String includeDir) throws Exception {
@@ -838,68 +851,61 @@ public class SwtMain {
                 return FileVisitResult.CONTINUE;
             }
         });
+    }
 
-        fc.analysis();
+    private void refreshTree() {
+        tree.setRedraw(false);
+        populateTree();
+        int totalWidth = 0;
+        for (int i = 1; i < tree.getColumnCount(); i++) {
+            tree.getColumn(i).pack();
+            totalWidth += tree.getColumn(i).getWidth();
+        }
+        int width = tree.getClientArea().width - totalWidth;
+        tree.getColumn(0).setWidth(Math.max(100, width));
+        tree.setRedraw(true);
 
-        display.asyncExec(new Runnable() {
-            @Override
-            public void run() {
-                tree.setRedraw(false);
-                populateTree();
-                int totalWidth = 0;
-                for (int i = 1; i < tree.getColumnCount(); i++) {
-                    tree.getColumn(i).pack();
-                    totalWidth += tree.getColumn(i).getWidth();
+        // populate drop down and enable buttons
+        fc.items().stream().forEach(mc -> {
+            if (mc.getName().length() > 0) {
+                comboName.add(mc.getName());
+
+                String prefix = mc.getName().substring(0, 1);
+                if (prefix.matches("\\d")) {
+                    prefix = "#";
                 }
-                int width = tree.getClientArea().width - totalWidth;
-                tree.getColumn(0).setWidth(Math.max(100, width));
-                tree.setRedraw(true);
+                else if (!Charset.forName("ISO-8859-1").newEncoder().canEncode(prefix)) {
+                    prefix = "UTF8";
+                }
 
-                // populate drop down and enable buttons
-                fc.items().stream().forEach(mc -> {
-                    if (mc.getName().length() > 0) {
-                        comboName.add(mc.getName());
-
-                        String prefix = mc.getName().substring(0, 1);
-                        if (prefix.matches("\\d")) {
-                            prefix = "#";
-                        }
-                        else if (!Charset.forName("ISO-8859-1").newEncoder().canEncode(prefix)) {
-                            prefix = "UTF8";
-                        }
-
-                        ToolItem b = nameButtons.get(prefix);
-                        if (b != null) {
-                            b.setEnabled(true);
-                        }
-                    }
-                });
-
-                FileItemStat fs = fc.files().getStat();
-                lblStatTotal.setText("Total: " + fs.getTotal().getFileCount() + " files, "
-                        + Utils.kmg(fc.files().getStat().getTotal().getFileSize(), true, " ", "B"));
-                lblStatTotal.pack();
-                lblStatD7.setText("7 Days: " + fs.get(7).getFileCount() + " files, "
-                        + Utils.kmg(fc.files().getStat().get(7).getFileSize(), true, " ", "B"));
-                lblStatD7.pack();
-                lblStatD30.setText("30 Days: " + fs.get(30).getFileCount() + " files, "
-                        + Utils.kmg(fc.files().getStat().get(30).getFileSize(), true, " ", "B"));
-                lblStatD30.pack();
-                lblStatY0.setText(fs.getCurrentYear() + ": " + fs.get(fs.getCurrentYear()).getFileCount() + " files, "
-                        + Utils.kmg(fc.files().getStat().get(fs.getCurrentYear()).getFileSize(), true, " ", "B"));
-                lblStatY0.pack();
-                lblStatY1.setText((fs.getCurrentYear() - 1) + ": " + fs.get(fs.getCurrentYear() - 1).getFileCount()
-                        + " files, "
-                        + Utils.kmg(fc.files().getStat().get(fs.getCurrentYear() - 1).getFileSize(), true, " ", "B"));
-                lblStatY1.pack();
-                lblStatY2.setText((fs.getCurrentYear() - 2) + ": " + fs.get(fs.getCurrentYear() - 2).getFileCount()
-                        + " files, "
-                        + Utils.kmg(fc.files().getStat().get(fs.getCurrentYear() - 2).getFileSize(), true, " ", "B"));
-                lblStatY2.pack();
-
-                lblStatTotal.getParent().layout();
+                ToolItem b = nameButtons.get(prefix);
+                if (b != null) {
+                    b.setEnabled(true);
+                }
             }
         });
+
+        FileItemStat fs = fc.files().getStat();
+        lblStatTotal.setText("Total: " + fs.getTotal().getFileCount() + " files, "
+                + Utils.kmg(fc.files().getStat().getTotal().getFileSize(), true, " ", "B"));
+        lblStatTotal.pack();
+        lblStatD7.setText("7 Days: " + fs.get(7).getFileCount() + " files, "
+                + Utils.kmg(fc.files().getStat().get(7).getFileSize(), true, " ", "B"));
+        lblStatD7.pack();
+        lblStatD30.setText("30 Days: " + fs.get(30).getFileCount() + " files, "
+                + Utils.kmg(fc.files().getStat().get(30).getFileSize(), true, " ", "B"));
+        lblStatD30.pack();
+        lblStatY0.setText(fs.getCurrentYear() + ": " + fs.get(fs.getCurrentYear()).getFileCount() + " files, "
+                + Utils.kmg(fc.files().getStat().get(fs.getCurrentYear()).getFileSize(), true, " ", "B"));
+        lblStatY0.pack();
+        lblStatY1.setText((fs.getCurrentYear() - 1) + ": " + fs.get(fs.getCurrentYear() - 1).getFileCount() + " files, "
+                + Utils.kmg(fc.files().getStat().get(fs.getCurrentYear() - 1).getFileSize(), true, " ", "B"));
+        lblStatY1.pack();
+        lblStatY2.setText((fs.getCurrentYear() - 2) + ": " + fs.get(fs.getCurrentYear() - 2).getFileCount() + " files, "
+                + Utils.kmg(fc.files().getStat().get(fs.getCurrentYear() - 2).getFileSize(), true, " ", "B"));
+        lblStatY2.pack();
+
+        lblStatTotal.getParent().layout();
     }
 
     private boolean matchFilter(String text, String filterLower) {
@@ -921,8 +927,8 @@ public class SwtMain {
         // need to be effectively final, so make it a size-1 array
         final TreeItem[] scrollTo = { null };
 
-        tree.removeAll();
         tree.setRedraw(false);
+        tree.removeAll();
         for (MagazineCollection mc : fc.items()) {
             TreeItem parent = new TreeItem(tree, SWT.None);
             parent.setData(mc);
@@ -994,12 +1000,13 @@ public class SwtMain {
         for (TreeItem item : tree.getItems()) {
             item.setExpanded(true);
         }
-        tree.setRedraw(true);
 
         if (scrollTo[0] != null) {
             tree.setTopItem(scrollTo[0]);
             tree.setSelection(scrollTo[0]);
         }
+
+        tree.setRedraw(true);
     }
 
     private void scrollTreeTo(String str) {
