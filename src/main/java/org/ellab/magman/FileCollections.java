@@ -180,7 +180,9 @@ public class FileCollections {
                     // Check if wrong day of week
                     final DayOfWeek maxDow = fis.getFileItems().stream()
                             .collect(Collectors.groupingBy(s -> s.getDateFrom().getDayOfWeek(), Collectors.counting()))
-                            .entrySet().stream().max(Comparator.comparing(Entry::getValue)).get().getKey();
+                            .entrySet().stream()
+                            .max(Comparator.comparing(Entry<DayOfWeek, Long>::getValue).thenComparing(Entry::getKey))
+                            .get().getKey();
                     // System.out.println("max=" + maxDow);
                     List<Long> daysList = new ArrayList<>();
                     FileItem prev = null;
