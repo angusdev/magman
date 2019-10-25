@@ -21,6 +21,27 @@ import java.util.stream.Collectors;
 import org.ellab.magman.FileItem.Type;
 
 public class FileCollections {
+    private FileItems allFiles = new FileItems();
+    private Map<String, MagazineCollection> map = new TreeMap<>(new Comparator<String>() {
+        @Override
+        // empty string sort to bottom
+        public int compare(String o1, String o2) {
+            if (o1.length() == 0 && o2.length() == 0) {
+                return 0;
+            }
+            else if (o1.length() == 0) {
+                return 1;
+            }
+            else if (o2.length() == 0) {
+                return -1;
+            }
+            else {
+                return o1.compareTo(o2);
+            }
+        }
+
+    });
+
     public class MagazineCollection {
         private String name;
         private String path;
@@ -103,27 +124,6 @@ public class FileCollections {
         }
     }
 
-    private FileItems allFiles = new FileItems();
-    private Map<String, MagazineCollection> map = new TreeMap<>(new Comparator<String>() {
-        @Override
-        // empty string sort to bottom
-        public int compare(String o1, String o2) {
-            if (o1.length() == 0 && o2.length() == 0) {
-                return 0;
-            }
-            else if (o1.length() == 0) {
-                return 1;
-            }
-            else if (o2.length() == 0) {
-                return -1;
-            }
-            else {
-                return o1.compareTo(o2);
-            }
-        }
-
-    });
-
     public void add(FileItem fi) {
         allFiles.add(fi);
 
@@ -148,94 +148,94 @@ public class FileCollections {
     }
 
     public void analysis() {
+        map.forEach((magazine, mc) -> analysis(magazine, mc));
+    }
+
+    public void analysis(String magazine, MagazineCollection mc) {
         Set<FileItem> missing = new HashSet<>();
 
-        map.forEach((magazine, mc) -> {
-            mc.groupMap.forEach((group, types) -> {
-                types.forEach((type, fis) -> {
-                    // mark the first/last item of the type
-                    fis.getFileItems().first().setEarliestOfType(true);
-                    fis.getFileItems().last().setLatestOfType(true);
+        mc.groupMap.forEach((group, types) -> {
+            types.forEach((type, fis) -> {
+                // mark the first/last item of the type
+                fis.getFileItems().first().setEarliestOfType(true);
+                fis.getFileItems().last().setLatestOfType(true);
 
-                    if (type.equals(FileItem.Type.Weekly)) {
-                        // Check if wrong day of week
-                        final DayOfWeek maxDow = fis.getFileItems().stream()
-                                .collect(Collectors.groupingBy(s -> s.getDateFrom().getDayOfWeek(),
-                                        Collectors.counting()))
-                                .entrySet().stream().max(Comparator.comparing(Entry::getValue)).get().getKey();
-                        // System.out.println("max=" + maxDow);
-                        List<Long> daysList = new ArrayList<>();
-                        FileItem prev = null;
-                        for (FileItem fi : fis.getFileItems()) {
-                            if (!fi.getDateFrom().getDayOfWeek().equals(maxDow)) {
-                                fi.addProblem(FileItem.Problem.WrongDow, false);
-                            }
-                            if (prev != null) {
-                                long days = ChronoUnit.DAYS.between(fi.getDateFrom(), prev.getDateFrom());
-                                daysList.add(days);
-                            }
-                            prev = fi;
-                        }
-
-                        // Check if biweekly
-                        final Optional<Map.Entry<Long, Long>> maxFreq = daysList.stream()
-                                .collect(Collectors.groupingBy(s -> s, Collectors.counting())).entrySet().stream()
-                                .max(Comparator.comparing(Entry::getValue));
-                        if (maxFreq.isPresent() && maxFreq.get().getKey() == 14) {
-                            fis.getFileItems().forEach(fi -> {
-                                fi.setType(FileItem.Type.Biweekly);
-                            });
-                        }
-                    }
-
-                    // add missing entries
+                if (type.equals(FileItem.Type.Weekly)) {
+                    // Check if wrong day of week
+                    final DayOfWeek maxDow = fis.getFileItems().stream()
+                            .collect(Collectors.groupingBy(s -> s.getDateFrom().getDayOfWeek(), Collectors.counting()))
+                            .entrySet().stream().max(Comparator.comparing(Entry::getValue)).get().getKey();
+                    // System.out.println("max=" + maxDow);
+                    List<Long> daysList = new ArrayList<>();
                     FileItem prev = null;
                     for (FileItem fi : fis.getFileItems()) {
+                        if (!fi.getDateFrom().getDayOfWeek().equals(maxDow)) {
+                            fi.addProblem(FileItem.Problem.WrongDow, false);
+                        }
                         if (prev != null) {
-                            if (FileItem.Type.Monthly.equals(type)) {
-                                LocalDate calPrev = prev.getDateTo();
-                                LocalDate calThis = fi.getDateFrom();
-                                if (calPrev.getYear() * 12 + calPrev.getMonthValue() + 1 < calThis.getYear() * 12
-                                        + calThis.getMonthValue()) {
-                                    calPrev = calPrev.plusMonths(1).withDayOfMonth(1);
-                                    calThis = calThis.minusMonths(1).withDayOfMonth(1);
-                                    FileItem n = FileItem.createMissingFileItem(prev, calPrev, calThis);
-                                    missing.add(n);
-                                }
-                            }
-                            else if (FileItem.Type.Weekly.equals(type)) {
-                                LocalDate calExpected = prev.getDateTo();
-                                LocalDate calThis = fi.getDateFrom();
-                                calExpected = calExpected
-                                        .plusDays(FileItem.Type.Biweekly.equals(fi.getType()) ? 14 : 7);
-                                if (calThis.isAfter(calExpected)) {
-                                    calThis = calThis.minusDays(FileItem.Type.Biweekly.equals(fi.getType()) ? 14 : 7);
-                                    FileItem n = FileItem.createMissingFileItem(prev, calExpected, calThis);
-                                    missing.add(n);
-                                }
-                            }
-                            else if (FileItem.Type.Quarterly.equals(type)) {
-                                LocalDate calExpected = prev.getDateTo();
-                                calExpected = calExpected.plusMonths(3);
-                                while (calExpected.isBefore(fi.getDateFrom())) {
-                                    FileItem n = FileItem.createMissingFileItem(prev, calExpected, calExpected);
-                                    missing.add(n);
-
-                                    calExpected = calExpected.plusMonths(3);
-                                }
-                            }
-                            else if (FileItem.Type.Issue.equals(type)) {
-                                int issuePrev = Integer.parseInt(prev.getDateStr());
-                                int issueThis = Integer.parseInt(fi.getDateStr());
-                                if (issueThis - issuePrev > 1) {
-                                    FileItem n = FileItem.createMissingFileItem(prev, issuePrev + 1, issueThis - 1);
-                                    missing.add(n);
-                                }
-                            }
+                            long days = ChronoUnit.DAYS.between(fi.getDateFrom(), prev.getDateFrom());
+                            daysList.add(days);
                         }
                         prev = fi;
                     }
-                });
+
+                    // Check if biweekly
+                    final Optional<Map.Entry<Long, Long>> maxFreq = daysList.stream()
+                            .collect(Collectors.groupingBy(s -> s, Collectors.counting())).entrySet().stream()
+                            .max(Comparator.comparing(Entry::getValue));
+                    if (maxFreq.isPresent() && maxFreq.get().getKey() == 14) {
+                        fis.getFileItems().forEach(fi -> {
+                            fi.setType(FileItem.Type.Biweekly);
+                        });
+                    }
+                }
+
+                // add missing entries
+                FileItem prev = null;
+                for (FileItem fi : fis.getFileItems()) {
+                    if (prev != null) {
+                        if (FileItem.Type.Monthly.equals(type)) {
+                            LocalDate calPrev = prev.getDateTo();
+                            LocalDate calThis = fi.getDateFrom();
+                            if (calPrev.getYear() * 12 + calPrev.getMonthValue() + 1 < calThis.getYear() * 12
+                                    + calThis.getMonthValue()) {
+                                calPrev = calPrev.plusMonths(1).withDayOfMonth(1);
+                                calThis = calThis.minusMonths(1).withDayOfMonth(1);
+                                FileItem n = FileItem.createMissingFileItem(prev, calPrev, calThis);
+                                missing.add(n);
+                            }
+                        }
+                        else if (FileItem.Type.Weekly.equals(type)) {
+                            LocalDate calExpected = prev.getDateTo();
+                            LocalDate calThis = fi.getDateFrom();
+                            calExpected = calExpected.plusDays(FileItem.Type.Biweekly.equals(fi.getType()) ? 14 : 7);
+                            if (calThis.isAfter(calExpected)) {
+                                calThis = calThis.minusDays(FileItem.Type.Biweekly.equals(fi.getType()) ? 14 : 7);
+                                FileItem n = FileItem.createMissingFileItem(prev, calExpected, calThis);
+                                missing.add(n);
+                            }
+                        }
+                        else if (FileItem.Type.Quarterly.equals(type)) {
+                            LocalDate calExpected = prev.getDateTo();
+                            calExpected = calExpected.plusMonths(3);
+                            while (calExpected.isBefore(fi.getDateFrom())) {
+                                FileItem n = FileItem.createMissingFileItem(prev, calExpected, calExpected);
+                                missing.add(n);
+
+                                calExpected = calExpected.plusMonths(3);
+                            }
+                        }
+                        else if (FileItem.Type.Issue.equals(type)) {
+                            int issuePrev = Integer.parseInt(prev.getDateStr());
+                            int issueThis = Integer.parseInt(fi.getDateStr());
+                            if (issueThis - issuePrev > 1) {
+                                FileItem n = FileItem.createMissingFileItem(prev, issuePrev + 1, issueThis - 1);
+                                missing.add(n);
+                            }
+                        }
+                    }
+                    prev = fi;
+                }
             });
         });
 
