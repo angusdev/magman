@@ -6,6 +6,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -147,11 +148,26 @@ public class FileCollections {
         return map.values();
     }
 
-    public void analysis() {
-        map.forEach((magazine, mc) -> analysis(magazine, mc));
+    public void remove(MagazineCollection[] magazine) {
+        Arrays.stream(magazine).forEach(m -> map.remove(m.getName()));
+
+        // Reset the stat
+        allFiles = new FileItems();
+        map.forEach((m, mc) -> mc.files().getFileItems().stream().forEach(f -> allFiles.add(f)));
     }
 
-    public void analysis(String magazine, MagazineCollection mc) {
+    public void analysis() {
+        map.forEach((magazine, mc) -> analysis(mc));
+    }
+
+    public void analysis(String magazine) {
+        MagazineCollection mc = map.get(magazine);
+        if (mc != null) {
+            analysis(mc);
+        }
+    }
+
+    private void analysis(MagazineCollection mc) {
         Set<FileItem> missing = new HashSet<>();
 
         mc.groupMap.forEach((group, types) -> {

@@ -36,6 +36,8 @@ import org.eclipse.swt.events.MenuDetectEvent;
 import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
@@ -323,6 +325,26 @@ public class SwtMain {
         compositeTree.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 5, 1));
 
         tree = new Tree(compositeTree, SWT.BORDER | SWT.FULL_SELECTION);
+        tree.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseDoubleClick(MouseEvent e) {
+                if (tree.getSelectionCount() > 0) {
+                    TreeItem ti = tree.getSelection()[0];
+                    if (ti.getData() instanceof FileItem) {
+                        FileItem fi = (FileItem) ti.getData();
+                        if (fi.isDummy()) {
+                            MagazineCollection mc = (MagazineCollection) ti.getParentItem().getData();
+                            try {
+                                refreshMagazine(new MagazineCollection[] { mc });
+                            }
+                            catch (Exception ex) {
+                                ex.printStackTrace();
+                            }
+                        }
+                    }
+                }
+            }
+        });
         tree.addMenuDetectListener(new MenuDetectListener() {
             public void menuDetected(MenuDetectEvent e) {
                 if (tree.getSelectionCount() <= 0) {
@@ -750,8 +772,8 @@ public class SwtMain {
         }.start();
     }
 
-    private void refreshAll(final Path path, String includeDir) throws Exception {
-        processDirectory(path, includeDir);
+    private void refreshAll(final Path path, final String includePartialMatch) throws Exception {
+        processDirectory(path, includePartialMatch, null);
 
         fc.analysis();
 
@@ -763,16 +785,35 @@ public class SwtMain {
         });
     }
 
-    private void processDirectory(final Path path, String includeDir) throws Exception {
-        final String finalIncludeDir = includeDir != null && includeDir.trim().length() > 0
-                ? includeDir.trim().toUpperCase()
+    private void refreshMagazine(final MagazineCollection[] mcs) throws Exception {
+        fc.remove(mcs);
+
+        Arrays.stream(mcs).forEach(mc -> {
+            try {
+                processDirectory(Paths.get(mc.getPath()).getParent(), null, mc.getName());
+                fc.analysis(mc.getName());
+            }
+            catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
+
+        tree.setRedraw(false);
+        refreshTree();
+        scrollTreeTo(mcs[0].getName());
+        tree.setRedraw(true);
+    }
+
+    private void processDirectory(final Path path, final String includePartialMatch, final String processThisPathOnly)
+            throws Exception {
+        final String finalIncludePartialDir = includePartialMatch != null && includePartialMatch.trim().length() > 0
+                ? includePartialMatch.trim().toUpperCase()
                 : null;
 
         int rootNameCount = path.getNameCount();
-        final int totalDirCount = (int) Arrays.stream(path.toFile().listFiles())
-                .filter(f -> f.isDirectory()
-                        && (finalIncludeDir == null || f.getName().toUpperCase().indexOf(finalIncludeDir) >= 0))
-                .count();
+        final int totalDirCount = (int) Arrays.stream(path.toFile().listFiles()).filter(f -> f.isDirectory()
+                && (finalIncludePartialDir == null || f.getName().toUpperCase().indexOf(finalIncludePartialDir) >= 0)
+                && (processThisPathOnly == null || f.getName().equalsIgnoreCase(processThisPathOnly))).count();
         currProgressDirIndex = 0;
         currProgressCurrDirFileTotal = 0;
         currProgressCurrDirFileIndex = 0;
@@ -780,10 +821,22 @@ public class SwtMain {
         Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                if (finalIncludeDir != null && !dir.equals(path)
-                        && dir.getFileName().toString().toUpperCase().indexOf(finalIncludeDir) < 0) {
-                    fc.add(FileItem.createDummyItem("Skipped ...", dir, dir.getFileName().toString()));
-                    return FileVisitResult.SKIP_SUBTREE;
+                final int nameCount = dir.getNameCount();
+
+                if (nameCount > rootNameCount) {
+                    final String suffix = dir.toString().substring(path.toString().length() + File.separator.length())
+                            .toUpperCase();
+
+                    if (processThisPathOnly != null && nameCount == rootNameCount + 1
+                            && !suffix.equalsIgnoreCase(processThisPathOnly)) {
+                        // if nameCount > rootNameCount + 1 means parent path already pass the checking, no need to skip
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+
+                    if (finalIncludePartialDir != null && suffix.indexOf(finalIncludePartialDir) < 0) {
+                        fc.add(FileItem.createDummyItem("Skipped ...", dir, dir.getFileName().toString()));
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
                 }
 
                 if (dir.getNameCount() == rootNameCount + 1) {
@@ -800,12 +853,12 @@ public class SwtMain {
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 final int nameCount = file.getNameCount();
 
-                if (finalIncludeDir != null && nameCount == rootNameCount + 1) {
-                    // has include sub directory, skip the file in root directory (rootNameCount + 1)
+                if ((finalIncludePartialDir != null || processThisPathOnly != null) && nameCount == rootNameCount + 1) {
+                    // has include partial match, skip the file in root directory (rootNameCount + 1)
                     return FileVisitResult.CONTINUE;
                 }
 
-                if (nameCount == rootNameCount + 2) {
+                if (nameCount > rootNameCount + 1) {
                     // Progress only take account into 1st level sub-directory
                     ++currProgressCurrDirFileIndex;
                 }
