@@ -261,14 +261,14 @@ public class FileCollections {
     }
 
     private static String cleanFilename(final String name) {
-        return name.replaceAll("[\\.\\(\\)\\[\\]\\-+=_,;]", " ").replaceAll("\\s\\s+", " ");
+        return name.replaceAll("[\\.\\(\\)\\[\\]\\-+=_,;]", " ").replaceAll("\\s\\s+", " ").trim();
     }
 
     public static String makeCleanFilename(String name) {
         final String ext = name.lastIndexOf('.') > 0
-                ? name.substring(name.lastIndexOf('.') + 1, name.length()).toLowerCase()
+                ? name.substring(name.lastIndexOf('.') + 1, name.length()).trim().toLowerCase()
                 : null;
-        name = name.replaceFirst("[.][^.]+$", "");
+        name = name.replaceFirst("[.][^.]+$", "").trim();
 
         return Utils.capitalize(cleanFilename(name)) + "." + ext;
     }
