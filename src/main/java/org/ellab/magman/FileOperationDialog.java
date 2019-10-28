@@ -57,6 +57,7 @@ public class FileOperationDialog extends Dialog {
     private static final int OPER_MONTHLY = 12;
     private static final int OPER_QUARTERLY = 13;
     private static final int OPER_ISSUE = 14;
+    private static final int OPER_NONE = 15;
     private static final Map<Integer, FileItem.Type> OPER_TO_FILEITEM_TYPE = new HashMap<>();
     static {
         OPER_TO_FILEITEM_TYPE.put(OPER_WEEKLY, FileItem.Type.Weekly);
@@ -100,12 +101,13 @@ public class FileOperationDialog extends Dialog {
 
     private Button btnPrev;
     private Button btnNext;
+    private Button btnExtend;
+    private Button btnReduce;
     private Button btnWeekly;
     private Button btnMonthly;
     private Button btnQuarterly;
     private Button btnIssue;
-    private Button btnExtend;
-    private Button btnReduce;
+    private Button btnNone;
 
     public FileOperationDialog(Shell parent, int style) {
         super(parent, style);
@@ -235,13 +237,15 @@ public class FileOperationDialog extends Dialog {
 
         Composite compositeDateButtons = new Composite(shell, SWT.NONE);
         compositeDateButtons.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false, 1, 1));
-        compositeDateButtons.setLayout(new RowLayout(SWT.HORIZONTAL));
+        RowLayout rl_compositeDateButtons = new RowLayout(SWT.HORIZONTAL);
+        rl_compositeDateButtons.spacing = 1;
+        compositeDateButtons.setLayout(rl_compositeDateButtons);
 
         btnPrev = new Button(compositeDateButtons, SWT.NONE);
         btnPrev.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                processOperation(OPER_PREV_NEXT, -1);
+                processDate(OPER_PREV_NEXT, -1);
             }
         });
         btnPrev.setEnabled(false);
@@ -251,7 +255,7 @@ public class FileOperationDialog extends Dialog {
         btnNext.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                processOperation(OPER_PREV_NEXT, 1);
+                processDate(OPER_PREV_NEXT, 1);
             }
         });
         btnNext.setEnabled(false);
@@ -261,7 +265,7 @@ public class FileOperationDialog extends Dialog {
         btnReduce.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                processOperation(OPER_EXTEND_REDUCE, -1);
+                processDate(OPER_EXTEND_REDUCE, -1);
             }
         });
         btnReduce.setEnabled(false);
@@ -271,7 +275,7 @@ public class FileOperationDialog extends Dialog {
         btnExtend.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                processOperation(OPER_EXTEND_REDUCE, 1);
+                processDate(OPER_EXTEND_REDUCE, 1);
             }
         });
         btnExtend.setEnabled(false);
@@ -286,7 +290,7 @@ public class FileOperationDialog extends Dialog {
         btnWeekly.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                processOperation(OPER_WEEKLY, null);
+                processDate(OPER_WEEKLY, null);
             }
         });
         btnWeekly.setEnabled(false);
@@ -296,7 +300,7 @@ public class FileOperationDialog extends Dialog {
         btnMonthly.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                processOperation(OPER_MONTHLY, null);
+                processDate(OPER_MONTHLY, null);
             }
         });
         btnMonthly.setEnabled(false);
@@ -306,7 +310,7 @@ public class FileOperationDialog extends Dialog {
         btnQuarterly.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                processOperation(OPER_QUARTERLY, null);
+                processDate(OPER_QUARTERLY, null);
             }
         });
         btnQuarterly.setEnabled(false);
@@ -316,11 +320,21 @@ public class FileOperationDialog extends Dialog {
         btnIssue.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                processOperation(OPER_ISSUE, null);
+                processDate(OPER_ISSUE, null);
             }
         });
         btnIssue.setEnabled(false);
         btnIssue.setText("&Issue");
+
+        btnNone = new Button(compositeDateButtons, SWT.NONE);
+        btnNone.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                processDate(OPER_NONE, null);
+            }
+        });
+        btnNone.setEnabled(false);
+        btnNone.setText("&None");
 
         Label lblSep2 = new Label(compositeDateButtons, SWT.SEPARATOR | SWT.VERTICAL);
         RowData layoutDataSep2 = new RowData();
@@ -399,12 +413,14 @@ public class FileOperationDialog extends Dialog {
         btnMonthly.setEnabled(false);
         btnQuarterly.setEnabled(false);
         btnIssue.setEnabled(false);
+        btnNone.setEnabled(false);
 
         if (table.getSelection().length > 0) {
-            btnIssue.setEnabled(true);
             btnWeekly.setEnabled(true);
             btnMonthly.setEnabled(true);
             btnQuarterly.setEnabled(true);
+            btnIssue.setEnabled(true);
+            btnNone.setEnabled(true);
         }
         if (Arrays.stream(table.getSelection()).anyMatch(i -> ((Item) i.getData()).type != null)) {
             btnPrev.setEnabled(true);
@@ -446,27 +462,31 @@ public class FileOperationDialog extends Dialog {
         return c.get(Calendar.YEAR) + padzero(c.get(Calendar.MONTH) + 1) + padzero(c.get(Calendar.DAY_OF_MONTH));
     }
 
-    private void processOperation(int action, Integer offset) {
+    private void processDate(int action, Integer offset) {
         table.setRedraw(false);
         for (TableItem ti : table.getSelection()) {
-            Item i = (Item) ti.getData();
-            if (OPER_TO_FILEITEM_TYPE.get(action) != null) {
-                processChangeType(i, OPER_TO_FILEITEM_TYPE.get(action));
+            Item item = (Item) ti.getData();
+            if (action == OPER_NONE) {
+                item.type = null;
+                item.dest = FileCollections.makeCleanFilename(item.src);
             }
-            if (i.type == null) {
+            else if (OPER_TO_FILEITEM_TYPE.get(action) != null) {
+                processChangeType(item, OPER_TO_FILEITEM_TYPE.get(action));
+            }
+            else if (item.type == null) {
                 continue;
             }
-            else if (FileItem.Type.Weekly.equals(i.type) || FileItem.Type.Biweekly.equals(i.type)) {
+            else if (FileItem.Type.Weekly.equals(item.type) || FileItem.Type.Biweekly.equals(item.type)) {
                 processWeekly(ti, action, offset);
             }
-            else if (FileItem.Type.Monthly.equals(i.type)) {
+            else if (FileItem.Type.Monthly.equals(item.type)) {
                 processMonthly(ti, action, offset);
             }
-            else if (FileItem.Type.Quarterly.equals(i.type)) {
+            else if (FileItem.Type.Quarterly.equals(item.type)) {
                 processQuarterly(ti, action, offset);
             }
-            ti.setText(COL_FREQ, i.type != null ? i.type.toString() : "");
-            ti.setText(COL_DEST, i.dest);
+            ti.setText(COL_FREQ, item.type != null ? item.type.toString() : "");
+            ti.setText(COL_DEST, item.dest);
         }
         tblclmnFreq.pack();
         tblclmnTo.pack();
