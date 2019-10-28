@@ -58,7 +58,7 @@ public class PreviewDialog extends Dialog {
         Display display = new Display();
         Shell shell = new Shell(display, SWT.SHELL_TRIM);
         new PreviewDialog(shell, SWT.APPLICATION_MODAL | SWT.TITLE | SWT.RESIZE | SWT.CLOSE | SWT.MAX | SWT.MIN)
-                .open("c:/users/angus/desktop/computer.pdf");
+                .open(null);
     }
 
     public PreviewDialog(Shell parent, int style) {
@@ -113,7 +113,9 @@ public class PreviewDialog extends Dialog {
 
         shell.layout();
 
-        openFile(file);
+        if (file != null) {
+            openFile(file);
+        }
 
         Display display = getParent().getDisplay();
         while (!shell.isDisposed()) {
