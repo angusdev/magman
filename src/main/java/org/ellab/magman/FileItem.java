@@ -32,9 +32,9 @@ public class FileItem implements Comparable<FileItem> {
     }
 
     private static Pattern PATTERN_YYYYMMDD = Pattern
-            .compile("^(([a-zA-Z]+)\\s+)?(\\d{4})(\\d{2})(\\d{2})(\\-(\\d{4})(\\d{2})(\\d{2}))?.*");
+            .compile("^(([a-zA-Z]+)\\s+)?((\\d{4})(\\d{2})(\\d{2})(\\-(\\d{4})(\\d{2})(\\d{2}))?).*");
     private static Pattern PATTERN_YYYYMM = Pattern
-            .compile("^(([a-zA-Z]+)\\s+)?(\\d{4})(\\d{2})(\\-(\\d{2}))?( ([^\\s]+))?.*");
+            .compile("^(([a-zA-Z]+)\\s+)?((\\d{4})(\\d{2})(\\-(\\d{2}))?)( ([^\\s]+))?.*");
     private static Pattern PATTERN_YYYYQ = Pattern
             .compile("^(([a-zA-Z]+)\\s+)?((\\d{4})Q(\\d)(\\-(\\d))?)( ([^\\s]+))?.*");
     private static Pattern PATTERN_ISSUE = Pattern.compile("^(([a-zA-Z]+)\\s+)?#(\\d+).*");
@@ -225,24 +225,22 @@ public class FileItem implements Comparable<FileItem> {
             // }
             valid = true;
             type = Type.Weekly;
-            group = m.group(2);
-            dateStr = str;
+            group = m.group(2) != null ? m.group(2) : "";
+            dateStr = m.group(3);
 
             int y1 = 0, m1 = 0, d1 = 0, y2 = 0, m2 = 0, d2 = 0;
-            if (m.group(6) != null) {
-                dateStr = str;
-                y1 = Integer.parseInt(m.group(3));
-                m1 = Integer.parseInt(m.group(4));
-                d1 = Integer.parseInt(m.group(5));
-                y2 = Integer.parseInt(m.group(7));
-                m2 = Integer.parseInt(m.group(8));
-                d2 = Integer.parseInt(m.group(9));
+            if (m.group(7) != null) {
+                y1 = Integer.parseInt(m.group(4));
+                m1 = Integer.parseInt(m.group(5));
+                d1 = Integer.parseInt(m.group(6));
+                y2 = Integer.parseInt(m.group(8));
+                m2 = Integer.parseInt(m.group(9));
+                d2 = Integer.parseInt(m.group(10));
             }
             else {
-                dateStr = str;
-                y2 = y1 = Integer.parseInt(m.group(3));
-                m2 = m1 = Integer.parseInt(m.group(4));
-                d2 = d1 = Integer.parseInt(m.group(5));
+                y2 = y1 = Integer.parseInt(m.group(4));
+                m2 = m1 = Integer.parseInt(m.group(5));
+                d2 = d1 = Integer.parseInt(m.group(6));
             }
             dateFrom = LocalDate.of(y1, m1, d1);
             dateTo = LocalDate.of(y2, m2, d2);
@@ -257,21 +255,21 @@ public class FileItem implements Comparable<FileItem> {
             // System.out.println(i + " - " + m.group(i));
             // }
             valid = true;
-            group = m.group(2);
+            group = m.group(2) != null ? m.group(2) : "";
             type = Type.Monthly;
-            dateStr = str;
+            dateStr = m.group(3);
 
             int y1 = 0, m1 = 0, y2 = 0, m2 = 0, d1 = 1, d2 = 1;
-            if (m.group(5) != null) {
-                y1 = Integer.parseInt(m.group(3));
-                m1 = Integer.parseInt(m.group(4));
-                m2 = Integer.parseInt(m.group(6));
+            if (m.group(6) != null) {
+                y1 = Integer.parseInt(m.group(4));
+                m1 = Integer.parseInt(m.group(5));
+                m2 = Integer.parseInt(m.group(7));
                 y2 = m2 < m1 ? y1 + 1 : y1;
             }
             else {
-                y2 = y1 = Integer.parseInt(m.group(3));
-                m2 = m1 = Integer.parseInt(m.group(4));
-                if ("Xmas".equals(m.group(8))) {
+                y2 = y1 = Integer.parseInt(m.group(4));
+                m2 = m1 = Integer.parseInt(m.group(5));
+                if ("Xmas".equals(m.group(7))) {
                     d2 = d1 = 25;
                 }
             }
@@ -288,7 +286,7 @@ public class FileItem implements Comparable<FileItem> {
             // System.out.println(i + " - " + m.group(i));
             // }
             valid = true;
-            group = m.group(2);
+            group = m.group(2) != null ? m.group(2) : "";
             type = Type.Quarterly;
             dateStr = m.group(3);
 
@@ -316,7 +314,7 @@ public class FileItem implements Comparable<FileItem> {
             // System.out.println(i + " - " + m.group(i));
             // }
             valid = true;
-            group = m.group(2);
+            group = m.group(2) != null ? m.group(2) : "";
             type = Type.Issue;
             dateStr = m.group(3);
             dateTo = dateFrom = LocalDate.of(Integer.parseInt(dateStr), 1, 1);
