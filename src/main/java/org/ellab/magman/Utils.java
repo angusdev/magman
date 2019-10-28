@@ -102,6 +102,7 @@ public class Utils {
     public static String guessDateFromFilename(String name, final FileItem.Type type) {
         // int[index, value, fromMonthName/fromQuarterName]
         int[] year = null;
+        int[] issue = null;
         List<int[]> month = new ArrayList<>();
         List<int[]> day = new ArrayList<>();
         List<int[]> monthOrDay = new ArrayList<>();
@@ -120,6 +121,12 @@ public class Utils {
             else if (s.matches("^\\d{4}$")) {
                 if (year == null) {
                     year = new int[] { i, Integer.parseInt(s) };
+                }
+            }
+            else if (s.matches("^ISSUES?$")) {
+                System.out.println("Y ISSUE " + splited[i + 1]);
+                if (i < splited.length - 1 && splited[i + 1].matches("^\\d+$")) {
+                    issue = new int[] { i + 1, Integer.parseInt(splited[i + 1]) };
                 }
             }
             else {
@@ -171,6 +178,10 @@ public class Utils {
         // it is common to have quarter issue for monthly magazine
         if (year != null && quarter.size() > 0) {
             return year[1] + "Q" + quarter.get(0)[1] + (quarter.size() > 1 ? "-" + quarter.get(1)[1] : "");
+        }
+
+        if (type.equals(FileItem.Type.Issue) && issue != null) {
+            return "#" + issue[1] + " " + year[1];
         }
 
         if (year == null || (month.size() + day.size() + monthOrDay.size()) == 0) {
@@ -298,7 +309,8 @@ public class Utils {
                 prevIsSpace = false;
             }
             else {
-                result[i] = Character.toLowerCase(ch);;
+                result[i] = Character.toLowerCase(ch);
+                ;
             }
         }
 

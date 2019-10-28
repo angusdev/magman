@@ -260,7 +260,20 @@ public class FileCollections {
         missing.forEach(m -> add(m));
     }
 
-    public FileItem guessFilename(String oriName) {
+    private static String cleanFilename(final String name) {
+        return name.replaceAll("[\\.\\(\\)\\[\\]\\-+=_,;]", " ").replaceAll("\\s\\s+", " ");
+    }
+
+    public static String makeCleanFilename(String name) {
+        final String ext = name.lastIndexOf('.') > 0
+                ? name.substring(name.lastIndexOf('.') + 1, name.length()).toLowerCase()
+                : null;
+        name = name.replaceFirst("[.][^.]+$", "");
+
+        return Utils.capitalize(cleanFilename(name)) + "." + ext;
+    }
+
+    public FileItem guessFilename(String oriName, FileItem.Type typeHint) {
         FileItem renameItem = null;
         String renameTo = null;
 
@@ -269,10 +282,9 @@ public class FileCollections {
                 ? oriName.substring(oriName.lastIndexOf('.') + 1, oriName.length()).toLowerCase()
                 : null;
         String name = oriName.replaceFirst("[.][^.]+$", "");
-        name = name.replaceAll("[\\.\\(\\)\\[\\]\\-+=_,;]", " ").replaceAll("\\s\\s+", " ");
-        name = name.toUpperCase();
+        name = cleanFilename(name);
 
-        final String searchName = name;
+        final String searchName = name.toUpperCase();
 
         // match the collection
         final MagazineCollection mag = items().stream()
@@ -292,17 +304,22 @@ public class FileCollections {
                 }
             });
 
-            // get the most frequent type
-            // note: group can't be null as it matched before
-            final Type type = mag.group(group).keySet().stream().reduce((a, b) -> a.ordinal() < b.ordinal() ? a : b)
-                    .get();
+            if (group == null) {
+                // group will be null if all files are invalid
+                return null;
+            }
+
+            // if not provided typeHint, get the most frequent type
+            final Type type = typeHint != null ? typeHint
+                    : (mag.group(group).keySet().stream().reduce((a, b) -> a.ordinal() < b.ordinal() ? a : b).get());
 
             final String prefix = mag.getName() + (group.length() > 0 ? (" " + group) : "");
 
             // remove the magazine name from the file name
-            int[] pos = Utils.fuzzyIndexOf(name, prefix.toUpperCase());
+            int[] pos = Utils.fuzzyIndexOf(searchName, prefix.toUpperCase());
             // pos must be non-null
-            final String remainedName = name.substring(0, pos[0]) + name.substring(pos[1], name.length()).trim();
+            final String remainedName = searchName.substring(0, pos[0])
+                    + searchName.substring(pos[1], searchName.length()).trim();
 
             final String guessedName = Utils.guessDateFromFilename(remainedName, type);
 
