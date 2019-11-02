@@ -124,7 +124,7 @@ public class FileOperationDialog extends Dialog {
                 renameList.add(new Item(file, oriName, fi, fc.mc(fi.getParentId())));
             }
             else {
-                renameList.add(new Item(file, oriName, FileCollections.makeCleanFilename(oriName)));
+                renameList.add(new Item(file, oriName, Utils.makeCleanFilename(oriName)));
             }
         });
 
@@ -468,7 +468,7 @@ public class FileOperationDialog extends Dialog {
             Item item = (Item) ti.getData();
             if (action == OPER_NONE) {
                 item.type = null;
-                item.dest = FileCollections.makeCleanFilename(item.src);
+                item.dest = Utils.makeCleanFilename(item.src);
             }
             else if (OPER_TO_FILEITEM_TYPE.get(action) != null) {
                 processChangeType(item, OPER_TO_FILEITEM_TYPE.get(action));

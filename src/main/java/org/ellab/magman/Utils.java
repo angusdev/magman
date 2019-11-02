@@ -6,8 +6,11 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Utils {
     private static final String[] MONTH_NAME = new String[] { "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
@@ -20,6 +23,39 @@ public class Utils {
         QUARTER_NAME.put("FALL", 3);
         QUARTER_NAME.put("AUTUMN", 3);
         QUARTER_NAME.put("WINTER", 4);
+    }
+
+    private static Map<String, Integer> EDITION_MAP = new HashMap<>();
+    static {
+        EDITION_MAP.put("four", 4);
+        EDITION_MAP.put("six", 6);
+        EDITION_MAP.put("seven", 7);
+        EDITION_MAP.put("ten", 10);
+        EDITION_MAP.put("eleven", 11);
+        EDITION_MAP.put("thirteen", 13);
+        EDITION_MAP.put("fourteen", 14);
+        EDITION_MAP.put("fifteen", 15);
+        EDITION_MAP.put("sixteen", 16);
+        EDITION_MAP.put("seventeen", 17);
+        EDITION_MAP.put("eighteen", 18);
+        EDITION_MAP.put("nineteen", 19);
+        new HashSet<>(EDITION_MAP.entrySet()).stream().forEach(e -> EDITION_MAP.put(e.getKey() + "th", e.getValue()));
+        EDITION_MAP.put("one", 1);
+        EDITION_MAP.put("first", 1);
+        EDITION_MAP.put("two", 2);
+        EDITION_MAP.put("second", 2);
+        EDITION_MAP.put("three", 3);
+        EDITION_MAP.put("third", 3);
+        EDITION_MAP.put("five", 5);
+        EDITION_MAP.put("fifth", 5);
+        EDITION_MAP.put("eight", 8);
+        EDITION_MAP.put("eighth", 8);
+        EDITION_MAP.put("nine", 9);
+        EDITION_MAP.put("ninth", 9);
+        EDITION_MAP.put("twelve", 12);
+        EDITION_MAP.put("twelfth", 12);
+        EDITION_MAP.put("twenty", 20);
+        EDITION_MAP.put("twentieth", 20);
     }
 
     public static boolean isValidYYYYMMDD(final String s) {
@@ -99,7 +135,7 @@ public class Utils {
         return result;
     }
 
-    public static String guessDateFromFilename(String name, final FileItem.Type type) {
+    public static String guessDateFromFilename(String oriname, final FileItem.Type type) {
         // int[index, value, fromMonthName/fromQuarterName]
         int[] year = null;
         int[] issue = null;
@@ -109,7 +145,7 @@ public class Utils {
         List<int[]> quarter = new ArrayList<>();
 
         // insert space between number and word
-        name = name.replaceAll("(?<=[A-Za-z])(?=[0-9])|(?<=[0-9])(?=[A-Za-z])", " ");
+        String name = oriname.replaceAll("(?<=[A-Za-z])(?=[0-9])|(?<=[0-9])(?=[A-Za-z])", " ");
 
         final String splited[] = name.split(" ");
         for (int i = 0; i < splited.length; i++) {
@@ -186,7 +222,7 @@ public class Utils {
 
         if (year == null || (month.size() + day.size() + monthOrDay.size()) == 0) {
             // no year or month, not a valid date
-            return name;
+            return oriname;
         }
 
         if (month.size() == 0) {
@@ -194,7 +230,7 @@ public class Utils {
 
             if (monthOrDay.size() == 0) {
                 // no monthOrDay, not match
-                return name;
+                return oriname;
             }
 
             if (monthOrDay.size() == 1) {
@@ -239,8 +275,7 @@ public class Utils {
             }
         }
 
-        return name;
-
+        return oriname;
     }
 
     public static int strToMonth(String s) {
@@ -315,5 +350,31 @@ public class Utils {
         }
 
         return new String(result);
+    }
+
+    public static String cleanFilename(String name) {
+        name = name.replaceAll("[\\.\\(\\)\\[\\]\\-+=_,;]", " ").replaceAll("\\s\\s+", " ").trim();
+
+        final Pattern editionPattern = Pattern.compile("(.*\\s)([a-zA-Z]+)\\sed(ition)?([\\s$].*)",
+                Pattern.CASE_INSENSITIVE);
+        final Matcher m = editionPattern.matcher(name);
+        if (m.matches()) {
+            final Integer edition = EDITION_MAP.get(m.group(2).toLowerCase());
+            if (edition != null) {
+                final String ordinal = edition == 1 ? "st" : (edition == 2 ? "nd" : (edition == 3 ? "rd" : "th"));
+                name = m.group(1) + edition + ordinal + " Edition" + m.group(4);
+            }
+        }
+
+        return name;
+    }
+
+    public static String makeCleanFilename(String name) {
+        final String ext = name.lastIndexOf('.') > 0
+                ? name.substring(name.lastIndexOf('.') + 1, name.length()).trim().toLowerCase()
+                : null;
+        name = name.replaceFirst("[.][^.]+$", "").trim();
+
+        return capitalize(cleanFilename(name)) + "." + ext;
     }
 }

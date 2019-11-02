@@ -260,19 +260,6 @@ public class FileCollections {
         missing.forEach(m -> add(m));
     }
 
-    private static String cleanFilename(final String name) {
-        return name.replaceAll("[\\.\\(\\)\\[\\]\\-+=_,;]", " ").replaceAll("\\s\\s+", " ").trim();
-    }
-
-    public static String makeCleanFilename(String name) {
-        final String ext = name.lastIndexOf('.') > 0
-                ? name.substring(name.lastIndexOf('.') + 1, name.length()).trim().toLowerCase()
-                : null;
-        name = name.replaceFirst("[.][^.]+$", "").trim();
-
-        return Utils.capitalize(cleanFilename(name)) + "." + ext;
-    }
-
     public FileItem guessFilename(String oriName, FileItem.Type typeHint) {
         FileItem renameItem = null;
         String renameTo = null;
@@ -282,7 +269,7 @@ public class FileCollections {
                 ? oriName.substring(oriName.lastIndexOf('.') + 1, oriName.length()).toLowerCase()
                 : null;
         String name = oriName.replaceFirst("[.][^.]+$", "");
-        name = cleanFilename(name);
+        name = Utils.cleanFilename(name);
 
         final String searchName = name.toUpperCase();
 

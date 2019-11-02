@@ -167,7 +167,16 @@ class UtilsTest {
         assertEquals("onetwo", helperTestFuzzyIndexOf("onetwo", "one two"));
         assertEquals("twothree", helperTestFuzzyIndexOf("one twothree four", "two three"));
         assertNull(helperTestFuzzyIndexOf("onetwothreefour", "two three"));
+    }
 
+    @Test
+    public void testCleanFilename() {
+        assertEquals("a word", Utils.cleanFilename("a word"));
+        assertEquals("a word", Utils.cleanFilename("a.+- word"));
+        assertEquals("at world 1st Edition 2019", Utils.cleanFilename("at.world.first.edition.2019"));
+        assertEquals("at world 2nd Edition 2019", Utils.cleanFilename("at.world.SECOND.ED.2019"));
+        assertEquals("at world 13th Edition 2019", Utils.cleanFilename("at.world.+thirteenth+ED.2019"));
+        assertEquals("at world 13th Edition 2019", Utils.cleanFilename("at.world.+thirteen+ED.2019"));
     }
 
 }
