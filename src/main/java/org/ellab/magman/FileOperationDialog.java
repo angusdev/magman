@@ -143,6 +143,9 @@ public class FileOperationDialog extends Dialog {
                 else if (a.type == null) {
                     return -1;
                 }
+                else if (b.type == null) {
+                    return 1;
+                }
                 else if (!a.type.equals(b.type)) {
                     return a.type.ordinal() - b.type.ordinal();
                 }
