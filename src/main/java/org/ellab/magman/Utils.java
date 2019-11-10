@@ -160,7 +160,6 @@ public class Utils {
                 }
             }
             else if (s.matches("^ISSUES?$")) {
-                System.out.println("Y ISSUE " + splited[i + 1]);
                 if (i < splited.length - 1 && splited[i + 1].matches("^\\d+$")) {
                     issue = new int[] { i + 1, Integer.parseInt(splited[i + 1]) };
                 }
