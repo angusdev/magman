@@ -149,6 +149,7 @@ public class SwtMain {
     private Label lblIncludeDir;
     private Text txtIncludeDir;
     private Composite compositeStat;
+    private Button btnSummary;
 
     public FileCollections getFileCollections() {
         return fc;
@@ -431,19 +432,29 @@ public class SwtMain {
 
         txtMessage = new Text(shell, SWT.BORDER | SWT.READ_ONLY | SWT.H_SCROLL | SWT.V_SCROLL | SWT.CANCEL | SWT.MULTI);
         txtMessage.setBackground(Display.getCurrent().getSystemColor(SWT.COLOR_LIST_BACKGROUND));
-        GridData gd_txtMessage = new GridData(SWT.FILL, SWT.FILL, true, false, 2, 1);
+        GridData gd_txtMessage = new GridData(SWT.FILL, SWT.FILL, true, false, 3, 1);
         gd_txtMessage.heightHint = 100;
         txtMessage.setLayoutData(gd_txtMessage);
 
         compositeDrop = new Composite(shell, SWT.NONE);
-        compositeDrop.setLayout(new FillLayout(SWT.VERTICAL));
-        compositeDrop.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false, 3, 1));
+        compositeDrop.setLayout(new GridLayout(1, false));
+        compositeDrop.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false, 2, 1));
 
         lblDropRename = new CLabel(compositeDrop, SWT.BORDER);
+        lblDropRename.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 1, 1));
         lblDropRename.setAlignment(SWT.CENTER);
         lblDropRename.setText("Drop files\r\nhere\r\nto rename");
 
         dropRename = new DropTarget(lblDropRename, DND.DROP_COPY | DND.DROP_DEFAULT);
+        
+                btnSummary = new Button(compositeDrop, SWT.NONE);
+                btnSummary.addSelectionListener(new SelectionAdapter() {
+                    @Override
+                    public void widgetSelected(SelectionEvent e) {
+                        new SummaryDialog(shell, SWT.TITLE | SWT.RESIZE | SWT.CLOSE | SWT.MAX | SWT.MIN).open(fc);
+                    }
+                });
+                btnSummary.setText("Summary");
 
         compositeStat = new Composite(shell, SWT.NONE);
         GridLayout gl_compositeStat = new GridLayout(6, false);
