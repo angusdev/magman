@@ -143,6 +143,7 @@ public class Utils {
         List<int[]> day = new ArrayList<>();
         List<int[]> monthOrDay = new ArrayList<>();
         List<int[]> quarter = new ArrayList<>();
+        boolean isXmas = false;
 
         // insert space between number and word
         String name = oriname.replaceAll("(?<=[A-Za-z])(?=[0-9])|(?<=[0-9])(?=[A-Za-z])", " ");
@@ -158,6 +159,9 @@ public class Utils {
                 if (year == null) {
                     year = new int[] { i, Integer.parseInt(s) };
                 }
+            }
+            else if ("CHRISTMAS".equals(s) || "XMAS".equals(s) || "HOLIDAY".equals(s)) {
+                isXmas = true;
             }
             else if (s.matches("^ISSUES?$")) {
                 if (i < splited.length - 1 && splited[i + 1].matches("^\\d+$")) {
@@ -209,6 +213,9 @@ public class Utils {
             }
         }
 
+        if (year != null && isXmas) {
+            return year[1] + "12 xmas";
+        }
         // since there is quarter name, will treat it as quarter no matter what type is
         // it is common to have quarter issue for monthly magazine
         if (year != null && quarter.size() > 0) {
