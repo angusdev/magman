@@ -72,6 +72,20 @@ public class Utils {
         }
     }
 
+    public static boolean isValidYYYYMM(final String s) {
+        if (!s.matches("^\\d{6}$")) {
+            return false;
+        }
+
+        final DateFormat df = new SimpleDateFormat("yyyymmdd");
+        try {
+            return (s + "01").equals(df.format(df.parse(s + "01")));
+        }
+        catch (ParseException ex) {
+            return false;
+        }
+    }
+
     private static int[] indexOfWord(final String str, final String substr) {
         final int pos = str.indexOf(substr + " ");
         if (pos >= 0) {
@@ -154,6 +168,12 @@ public class Utils {
             if (Utils.isValidYYYYMMDD(s)) {
                 // yyyymmdd
                 return s;
+            }
+            else if (Utils.isValidYYYYMM(s)) {
+                if (year == null) {
+                    year = new int[] { i, Integer.parseInt(s.substring(0, 4)) };
+                    month.add(new int[] { i, Integer.parseInt(s.substring(4, 6)), 0 });
+                }
             }
             else if (s.matches("^\\d{4}$")) {
                 if (year == null) {
