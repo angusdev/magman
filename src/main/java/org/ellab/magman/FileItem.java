@@ -14,7 +14,7 @@ public class FileItem implements Comparable<FileItem> {
     };
 
     public static enum Type {
-        Weekly(1), Biweekly(2), Monthly(3), Quarterly(4), Issue(5);
+        Weekly(1), Biweekly(2), Monthly(3), Quarterly(4), SemiAnnually(5), Issue(6);
 
         private final int type;
 
@@ -36,7 +36,9 @@ public class FileItem implements Comparable<FileItem> {
     private static Pattern PATTERN_YYYYMM = Pattern
             .compile("^(([a-zA-Z]+)\\s+)?((\\d{4})(\\d{2})(\\-(\\d{2}))?)( ([^\\s]+))?.*");
     private static Pattern PATTERN_YYYYQ = Pattern
-            .compile("^(([a-zA-Z]+)\\s+)?((\\d{4})Q(\\d)(\\-(\\d))?)( ([^\\s]+))?.*");
+            .compile("^(([a-zA-Z]+)\\s+)?((\\d{4})Q([1234])(\\-([1234]))?)( ([^\\s]+))?.*");
+    private static Pattern PATTERN_YYYYH = Pattern
+            .compile("^(([a-zA-Z]+)\\s+)?((\\d{4})H([12])(\\-([12]))?)( ([^\\s]+))?.*");
     private static Pattern PATTERN_ISSUE = Pattern.compile("^(([a-zA-Z]+)\\s+)?#(\\d+).*");
 
     private String parent;
@@ -111,6 +113,12 @@ public class FileItem implements Comparable<FileItem> {
             fi.dateStr = fi.dateFrom.getYear() + "Q" + ((fi.dateFrom.getMonthValue() / 3) + 1);
             if (!fi.dateFrom.equals(fi.dateTo)) {
                 fi.dateStr += "-" + ((fi.dateTo.getMonthValue() / 3) + 1);
+            }
+        }
+        else if (Type.SemiAnnually.equals(fi.type)) {
+            fi.dateStr = fi.dateFrom.getYear() + "H" + ((fi.dateFrom.getMonthValue() / 6) + 1);
+            if (!fi.dateFrom.equals(fi.dateTo)) {
+                fi.dateStr += "-" + ((fi.dateTo.getMonthValue() / 6) + 1);
             }
         }
 
@@ -300,6 +308,35 @@ public class FileItem implements Comparable<FileItem> {
             else {
                 y2 = y1 = Integer.parseInt(m.group(4));
                 m2 = m1 = Integer.parseInt(m.group(5)) * 3 - 1;
+            }
+            dateFrom = LocalDate.of(y1, m1, d1);
+            dateTo = LocalDate.of(y2, m2, d2);
+
+            return;
+        }
+
+
+        m = PATTERN_YYYYH.matcher(str);
+        if (m.find()) {
+            // System.out.println("SemiAnnual");
+            // for (int i = 0; m.matches() && i <= m.groupCount(); i++) {
+            // System.out.println(i + " - " + m.group(i));
+            // }
+            valid = true;
+            group = m.group(2) != null ? m.group(2) : "";
+            type = Type.SemiAnnually;
+            dateStr = m.group(3);
+
+            int y1 = 0, m1 = 0, y2 = 0, m2 = 0, d1 = 1, d2 = 1;
+            if (m.group(6) != null) {
+                y1 = Integer.parseInt(m.group(4));
+                m1 = Integer.parseInt(m.group(5)) * 6 - 1;
+                m2 = Integer.parseInt(m.group(7)) * 6 - 1;
+                y2 = m2 < m1 ? y1 + 1 : y1;
+            }
+            else {
+                y2 = y1 = Integer.parseInt(m.group(4));
+                m2 = m1 = Integer.parseInt(m.group(5)) * 6 - 1;
             }
             dateFrom = LocalDate.of(y1, m1, d1);
             dateTo = LocalDate.of(y2, m2, d2);

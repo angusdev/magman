@@ -263,6 +263,16 @@ public class FileCollections {
                                 calExpected = calExpected.plusMonths(3);
                             }
                         }
+                        else if (FileItem.Type.SemiAnnually.equals(type)) {
+                            LocalDate calExpected = prev.getDateTo();
+                            calExpected = calExpected.plusMonths(6);
+                            while (calExpected.isBefore(fi.getDateFrom())) {
+                                FileItem n = FileItem.createMissingFileItem(prev, calExpected, calExpected);
+                                missing.add(n);
+
+                                calExpected = calExpected.plusMonths(6);
+                            }
+                        }
                         else if (FileItem.Type.Issue.equals(type)) {
                             int issuePrev = Integer.parseInt(prev.getDateStr());
                             int issueThis = Integer.parseInt(fi.getDateStr());

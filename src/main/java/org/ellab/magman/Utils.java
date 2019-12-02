@@ -284,7 +284,10 @@ public class Utils {
 
         // now has year and has month
         int m = month.get(0)[1];
-        if (type.equals(FileItem.Type.Quarterly)) {
+        if (type.equals(FileItem.Type.SemiAnnually)) {
+            return year[1] + "H" + ((m - 1) / 6 + 1);
+        }
+        else if (type.equals(FileItem.Type.Quarterly)) {
             return year[1] + "Q" + ((m - 1) / 3 + 1);
         }
         else if (type.equals(FileItem.Type.Monthly)) {
