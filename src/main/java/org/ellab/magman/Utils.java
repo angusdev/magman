@@ -137,13 +137,19 @@ public class Utils {
 
         if (str.indexOf(" & ") > 0 && substr.indexOf(" AND ") > 0) {
             result = fuzzyIndexOf(str.replace(" & ", " AND "), substr);
-            // adjust the length as it is replaced
-            result[1] -= 2;
+
+            if (result != null) {
+                // adjust the length as it is replaced
+                result[1] -= 2;
+            }
         }
         else if (str.indexOf(" AND ") > 0 && substr.indexOf(" &") > 0) {
             result = fuzzyIndexOf(str.replace(" AND ", " & "), substr);
-            // adjust the length as it is replaced
-            result[1] += 2;
+
+            if (result != null) {
+                // adjust the length as it is replaced
+                result[1] -= 2;
+            }
         }
 
         return result;
