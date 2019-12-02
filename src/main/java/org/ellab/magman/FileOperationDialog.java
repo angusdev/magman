@@ -131,7 +131,10 @@ public class FileOperationDialog extends Dialog {
         renameList.sort(new Comparator<FileOperationDialog.Item>() {
             @Override
             public int compare(FileOperationDialog.Item a, FileOperationDialog.Item b) {
-                if (a.mc == null) {
+                if (a.mc == null && b.mc == null) {
+                    return 0;
+                }
+                else if (a.mc == null) {
                     return -1;
                 }
                 else if (b.mc == null) {
@@ -139,6 +142,9 @@ public class FileOperationDialog extends Dialog {
                 }
                 else if (!a.mc.getName().equals(b.mc.getName())) {
                     return a.mc.getName().compareTo(b.mc.getName());
+                }
+                else if (a.type == null && b.type == null) {
+                    return 0;
                 }
                 else if (a.type == null) {
                     return -1;
