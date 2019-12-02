@@ -196,7 +196,7 @@ public class FileOperationDialog extends Dialog {
                 if (ti != null) {
                     try {
                         String path = ((Item) ti.getData()).path;
-                        if (path.toLowerCase().endsWith(".pdf")) {
+                        if (FileCollections.isSupportedFilename(path)) {
                             new PreviewDialog(shell,
                                     SWT.APPLICATION_MODAL | SWT.TITLE | SWT.RESIZE | SWT.CLOSE | SWT.MAX | SWT.MIN)
                                             .open(path);

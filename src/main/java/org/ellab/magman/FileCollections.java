@@ -22,6 +22,18 @@ import java.util.stream.Collectors;
 import org.ellab.magman.FileItem.Type;
 
 public class FileCollections {
+    private static Set<String> SUPPORTED_TYPE = new HashSet<>();
+    static {
+        SUPPORTED_TYPE.add("pdf");
+        SUPPORTED_TYPE.add("mp3");
+        SUPPORTED_TYPE.add("epub");
+        SUPPORTED_TYPE.add("mobi");
+        SUPPORTED_TYPE.add("doc");
+        SUPPORTED_TYPE.add("docx");
+        SUPPORTED_TYPE.add("xls");
+        SUPPORTED_TYPE.add("xlsx");
+    }
+
     private FileItems allFiles = new FileItems();
     private Map<String, MagazineCollection> map = new TreeMap<>(new Comparator<String>() {
         @Override
@@ -154,6 +166,14 @@ public class FileCollections {
         // Reset the stat
         allFiles = new FileItems();
         map.forEach((m, mc) -> mc.files().getFileItems().stream().forEach(f -> allFiles.add(f)));
+    }
+
+    public static boolean isSupportedFilename(String name) {
+        final String ext = name.lastIndexOf('.') > 0
+                ? name.substring(name.lastIndexOf('.') + 1, name.length()).trim().toLowerCase()
+                : "";
+
+        return SUPPORTED_TYPE.contains(ext.toLowerCase());
     }
 
     public void analysis() {

@@ -875,7 +875,7 @@ public class SwtMain {
                 }
 
                 String filename = file.getFileName().toString();
-                if (filename.toLowerCase().endsWith(".pdf") || filename.toLowerCase().endsWith(".mp3")) {
+                if (FileCollections.isSupportedFilename(filename)) {
                     String parentFullName = "";
                     Path parent = file;
                     for (int i = nameCount; i > rootNameCount + 1; i--) {
