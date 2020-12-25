@@ -149,7 +149,7 @@ public class Utils {
 
             if (result != null) {
                 // adjust the length as it is replaced
-                result[1] -= 2;
+                result[1] += 2;
             }
         }
 
