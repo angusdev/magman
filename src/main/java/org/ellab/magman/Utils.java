@@ -392,6 +392,12 @@ public class Utils {
     public static String cleanFilename(String name) {
         name = name.replaceAll("[\\.\\(\\)\\[\\]\\-+=_,;]", " ").replaceAll("\\s\\s+", " ").trim();
 
+        // insert space between month name
+        // e.g. MyMagazineNovember -> MyMagazine November
+        for (String s : MONTH_NAME) {
+            name = name.replaceAll("(?i)(?<=[a-zA-Z])(?=" + s + ")", " ");
+        }
+
         final Pattern editionPattern = Pattern.compile("(.*\\s)([a-zA-Z]+)\\sed(ition)?([\\s$].*)",
                 Pattern.CASE_INSENSITIVE);
         final Matcher m = editionPattern.matcher(name);

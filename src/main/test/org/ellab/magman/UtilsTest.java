@@ -67,7 +67,7 @@ class UtilsTest {
         assertEquals("201910", Utils.guessDateFromFilename("11 October 2019", FileItem.Type.Monthly));
         assertEquals("201910", Utils.guessDateFromFilename("11Oct2019", FileItem.Type.Monthly));
         assertEquals("201910", Utils.guessDateFromFilename("8 10 2019", FileItem.Type.Monthly));
-        assertEquals("201910", Utils.guessDateFromFilename("201910 11",  FileItem.Type.Monthly));
+        assertEquals("201910", Utils.guessDateFromFilename("201910 11", FileItem.Type.Monthly));
 
         assertEquals("201910-11", Utils.guessDateFromFilename("Oct Nov 2019", FileItem.Type.Monthly));
         assertEquals("201910-11", Utils.guessDateFromFilename("11 Oct Nov 2019", FileItem.Type.Monthly));
@@ -173,11 +173,16 @@ class UtilsTest {
     @Test
     public void testCleanFilename() {
         assertEquals("a word", Utils.cleanFilename("a word"));
+        assertEquals("A WoRd", Utils.cleanFilename("A WoRd"));
         assertEquals("a word", Utils.cleanFilename("a.+- word"));
         assertEquals("at world 1st Edition 2019", Utils.cleanFilename("at.world.first.edition.2019"));
         assertEquals("at world 2nd Edition 2019", Utils.cleanFilename("at.world.SECOND.ED.2019"));
         assertEquals("at world 13th Edition 2019", Utils.cleanFilename("at.world.+thirteenth+ED.2019"));
         assertEquals("at world 13th Edition 2019", Utils.cleanFilename("at.world.+thirteen+ED.2019"));
+        assertEquals("at world october2019", Utils.cleanFilename("at worldoctober2019"));
+        assertEquals("at world October2019", Utils.cleanFilename("at worldOctober2019"));
+        assertEquals("at world october november2019", Utils.cleanFilename("at worldoctobernovember2019"));
+        assertEquals("at world123october2019", Utils.cleanFilename("at.world123october2019"));
     }
 
 }
