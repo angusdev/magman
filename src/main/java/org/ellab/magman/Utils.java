@@ -5,6 +5,7 @@ import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -249,7 +250,8 @@ public class Utils {
         }
 
         if (type.equals(FileItem.Type.Issue) && issue != null) {
-            return "#" + issue[1] + " " + year[1];
+            return "#" + issue[1] + " " + (year != null && year.length > 0 ? year[1]
+                    : String.valueOf(Calendar.getInstance().get(Calendar.YEAR)));
         }
 
         if (year == null || (month.size() + day.size() + monthOrDay.size()) == 0) {
