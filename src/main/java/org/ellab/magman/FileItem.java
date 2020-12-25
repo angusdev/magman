@@ -1,6 +1,7 @@
 package org.ellab.magman;
 
 import java.nio.file.Path;
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Set;
@@ -250,8 +251,15 @@ public class FileItem implements Comparable<FileItem> {
                 m2 = m1 = Integer.parseInt(m.group(5));
                 d2 = d1 = Integer.parseInt(m.group(6));
             }
-            dateFrom = LocalDate.of(y1, m1, d1);
-            dateTo = LocalDate.of(y2, m2, d2);
+
+            try {
+                dateFrom = LocalDate.of(y1, m1, d1);
+                dateTo = LocalDate.of(y2, m2, d2);
+            }
+            catch (DateTimeException ex) {
+                dateFrom = null;
+                dateTo = null;
+            }
 
             return;
         }
@@ -314,7 +322,6 @@ public class FileItem implements Comparable<FileItem> {
 
             return;
         }
-
 
         m = PATTERN_YYYYH.matcher(str);
         if (m.find()) {
