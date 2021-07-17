@@ -446,15 +446,15 @@ public class SwtMain {
         lblDropRename.setText("Drop files\r\nhere\r\nto rename");
 
         dropRename = new DropTarget(lblDropRename, DND.DROP_COPY | DND.DROP_DEFAULT);
-        
-                btnSummary = new Button(compositeDrop, SWT.NONE);
-                btnSummary.addSelectionListener(new SelectionAdapter() {
-                    @Override
-                    public void widgetSelected(SelectionEvent e) {
-                        new SummaryDialog(shell, SWT.TITLE | SWT.RESIZE | SWT.CLOSE | SWT.MAX | SWT.MIN).open(fc);
-                    }
-                });
-                btnSummary.setText("Summary");
+
+        btnSummary = new Button(compositeDrop, SWT.NONE);
+        btnSummary.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                new SummaryDialog(shell, SWT.TITLE | SWT.RESIZE | SWT.CLOSE | SWT.MAX | SWT.MIN).open(fc);
+            }
+        });
+        btnSummary.setText("Summary");
 
         compositeStat = new Composite(shell, SWT.NONE);
         GridLayout gl_compositeStat = new GridLayout(6, false);
