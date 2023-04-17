@@ -712,6 +712,18 @@ public class SwtMain {
 
         DropTargetListener dropListener = (new BaseDropTargetHandler(fileTransfer, this) {
             @Override
+            public void dragEnter(DropTargetEvent event) {
+                lblDropRename.setBackground(new Color(192, 255, 192));
+                super.dragEnter(event);
+            }
+
+            @Override
+            public void dragLeave(DropTargetEvent event) {
+                lblDropRename.setBackground(display.getSystemColor(SWT.COLOR_WIDGET_BACKGROUND));
+                super.dragLeave(event);
+            }
+
+            @Override
             public void drop(DropTargetEvent event) {
                 if (fileTransfer.isSupportedType(event.currentDataType)) {
                     display.asyncExec(new Runnable() {
