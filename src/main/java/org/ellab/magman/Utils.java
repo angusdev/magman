@@ -182,9 +182,16 @@ public class Utils {
                     month.add(new int[] { i, Integer.parseInt(s.substring(4, 6)), 0 });
                 }
             }
-            else if (s.matches("^\\d{4}$")) {
+            else if (s.matches("^(19|20)\\d{2}$")) {
                 if (year == null) {
                     year = new int[] { i, Integer.parseInt(s) };
+                }
+            }
+            else if (s.matches("^\\d{4}$")) {
+                // Aug 0511, means 5-Aug to 11-Aug
+                final int num = Integer.parseInt(s.substring(0, 2));
+                if (num >= 1 && num <= 31) {
+                    day.add(new int[] { i, num, 0 });
                 }
             }
             else if ("CHRISTMAS".equals(s) || "XMAS".equals(s) || "HOLIDAY".equals(s)) {
@@ -199,6 +206,9 @@ public class Utils {
                 int strToMonth = Utils.strToMonth(s);
                 if (strToMonth > 0) {
                     month.add(new int[] { i, strToMonth, 1 });
+                    // We found a concrete month name, so previous monthOrDay must be day
+                    day.addAll(monthOrDay);
+                    monthOrDay.clear();
                 }
                 else if (QUARTER_NAME.containsKey(s)) {
                     quarter.add(new int[] { i, QUARTER_NAME.get(s), 1 });
