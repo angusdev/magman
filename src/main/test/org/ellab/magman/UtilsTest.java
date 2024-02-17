@@ -178,14 +178,34 @@ class UtilsTest {
         assertEquals("a word", Utils.cleanFilename("a word"));
         assertEquals("A WoRd", Utils.cleanFilename("A WoRd"));
         assertEquals("a word", Utils.cleanFilename("a.+- word"));
-        assertEquals("at world 1st Edition 2019", Utils.cleanFilename("at.world.first.edition.2019"));
-        assertEquals("at world 2nd Edition 2019", Utils.cleanFilename("at.world.SECOND.ED.2019"));
-        assertEquals("at world 13th Edition 2019", Utils.cleanFilename("at.world.+thirteenth+ED.2019"));
-        assertEquals("at world 13th Edition 2019", Utils.cleanFilename("at.world.+thirteen+ED.2019"));
+        assertEquals("at world 1st edition 2019", Utils.cleanFilename("at.world.1st.edition.2019"));
+        assertEquals("at world 1st edition 2019", Utils.cleanFilename("at.world.first.edition.2019"));
+        assertEquals("at world 2nd edition 2019", Utils.cleanFilename("at.world.SECOND.ED.2019"));
+        assertEquals("at world 13th edition 2019", Utils.cleanFilename("at.world.+thirteenth+ED.2019"));
+        assertEquals("at world 13th edition 2019", Utils.cleanFilename("at.world.+thirteen+ED.2019"));
+        assertEquals("at world 1st edition 2019", Utils.cleanFilename("at.world.ED1.2019"));
+        assertEquals("at world 103rd edition 2019", Utils.cleanFilename("at.world.ED103.2019"));
+        assertEquals("at world 103rd edition", Utils.cleanFilename("at.world.ED103"));
         assertEquals("at world october2019", Utils.cleanFilename("at worldoctober2019"));
         assertEquals("at world October2019", Utils.cleanFilename("at worldOctober2019"));
         assertEquals("at world october november2019", Utils.cleanFilename("at worldoctobernovember2019"));
         assertEquals("at world123october2019", Utils.cleanFilename("at.world123october2019"));
     }
 
+    @Test
+    public void testToOrdinalNumber() {
+        assertEquals("1st", Utils.toOrdinalNumber(1));
+        assertEquals("2nd", Utils.toOrdinalNumber(2));
+        assertEquals("3rd", Utils.toOrdinalNumber(3));
+        assertEquals("4th", Utils.toOrdinalNumber(4));
+        assertEquals("11th", Utils.toOrdinalNumber(11));
+        assertEquals("12th", Utils.toOrdinalNumber(12));
+        assertEquals("13th", Utils.toOrdinalNumber(13));
+        assertEquals("21st", Utils.toOrdinalNumber(21));
+        assertEquals("22nd", Utils.toOrdinalNumber(22));
+        assertEquals("23rd", Utils.toOrdinalNumber(23));
+        assertEquals("101st", Utils.toOrdinalNumber(101));
+        assertEquals("102nd", Utils.toOrdinalNumber(102));
+        assertEquals("103rd", Utils.toOrdinalNumber(103));
+    }
 }

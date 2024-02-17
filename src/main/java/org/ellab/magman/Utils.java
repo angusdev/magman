@@ -17,6 +17,11 @@ public class Utils {
     private static final String[] MONTH_NAME = new String[] { "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
             "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER" };
 
+    private static final Pattern ORDINAL_NUMBER_EDITION_PATTERN = Pattern
+            .compile("(.*\\b)([a-zA-Z]+)\\sed(ition)?(\\b.*)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern ED_NUMBER_PATTERN = Pattern.compile("(.*\\b)ed(ition)?(\\d+)(\\b.*)",
+            Pattern.CASE_INSENSITIVE);
+
     private static final Map<String, Integer> QUARTER_NAME = new HashMap<>();
     static {
         QUARTER_NAME.put("SPRING", 1);
@@ -57,6 +62,23 @@ public class Utils {
         EDITION_MAP.put("twelfth", 12);
         EDITION_MAP.put("twenty", 20);
         EDITION_MAP.put("twentieth", 20);
+    }
+
+    public static String toOrdinalNumber(int n) {
+        if (n >= 11 && n <= 13) {
+            return n + "th";
+        }
+
+        switch (n % 10) {
+        case 1:
+            return n + "st";
+        case 2:
+            return n + "nd";
+        case 3:
+            return n + "rd";
+        default:
+            return n + "th";
+        }
     }
 
     public static boolean isValidYYYYMMDD(final String s) {
@@ -408,14 +430,19 @@ public class Utils {
             name = name.replaceAll("(?i)(?<=[a-zA-Z])(?=" + s + ")", " ");
         }
 
-        final Pattern editionPattern = Pattern.compile("(.*\\s)([a-zA-Z]+)\\sed(ition)?([\\s$].*)",
-                Pattern.CASE_INSENSITIVE);
-        final Matcher m = editionPattern.matcher(name);
-        if (m.matches()) {
-            final Integer edition = EDITION_MAP.get(m.group(2).toLowerCase());
+        final Matcher mOrdinalNumber = ORDINAL_NUMBER_EDITION_PATTERN.matcher(name);
+        final Matcher mEdNumber = ED_NUMBER_PATTERN.matcher(name);
+
+        if (mOrdinalNumber.matches()) {
+            final Integer edition = EDITION_MAP.get(mOrdinalNumber.group(2).toLowerCase());
             if (edition != null) {
-                final String ordinal = edition == 1 ? "st" : (edition == 2 ? "nd" : (edition == 3 ? "rd" : "th"));
-                name = m.group(1) + edition + ordinal + " Edition" + m.group(4);
+                name = mOrdinalNumber.group(1) + toOrdinalNumber(edition) + " edition" + mOrdinalNumber.group(4);
+            }
+        }
+        else {
+            if (mEdNumber.matches()) {
+                final Integer edition = Integer.parseInt(mEdNumber.group(3));
+                name = mEdNumber.group(1) + toOrdinalNumber(edition) + " edition" + mEdNumber.group(4);
             }
         }
 
