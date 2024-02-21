@@ -32,6 +32,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Dialog;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
@@ -393,7 +394,7 @@ public class FileOperationDialog extends Dialog {
     }
 
     private void init(List<Item> items) {
-        table.setRedraw(true);
+        table.setRedraw(false);
 
         items.forEach(item -> {
             TableItem ti = new TableItem(table, SWT.NONE);
@@ -408,6 +409,11 @@ public class FileOperationDialog extends Dialog {
         for (int i = 0; i < table.getColumnCount() - 1; i++) {
             // don't pack last
             table.getColumn(i).pack();
+        }
+        
+        if (table.getItemCount() == 1) {
+            table.setSelection(0);
+            table.notifyListeners(SWT.Selection, new Event());
         }
 
         table.setRedraw(true);
