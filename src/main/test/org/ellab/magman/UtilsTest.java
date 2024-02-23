@@ -114,6 +114,17 @@ class UtilsTest {
         assertEquals("2019Q1-2", Utils.guessDateFromFilename("SPRING SUMMER 2019", FileItem.Type.Quarterly));
         assertEquals("2019Q1-4", Utils.guessDateFromFilename("SPRING2019WINTER", FileItem.Type.Quarterly));
         assertEquals("2019Q1", Utils.guessDateFromFilename("SPRING 2019", FileItem.Type.Monthly));
+
+        assertEquals("#123 2019", Utils.guessDateFromFilename("ISSUES123 2019", FileItem.Type.Issue));
+        assertEquals("#123 2019", Utils.guessDateFromFilename("ISSUES 123 2019", FileItem.Type.Issue));
+        assertEquals("#123 2019", Utils.guessDateFromFilename("ISSUE123 2019", FileItem.Type.Issue));
+        assertEquals("#123 2019", Utils.guessDateFromFilename("ISSUE 123 2019", FileItem.Type.Issue));
+        assertEquals("#123 2019", Utils.guessDateFromFilename("I123 2019", FileItem.Type.Issue));
+        assertEquals("#123 2019", Utils.guessDateFromFilename("I 123 2019", FileItem.Type.Issue));
+        assertEquals("#123 2019", Utils.guessDateFromFilename("123 2019", FileItem.Type.Issue));
+        assertEquals("#123 2019", Utils.guessDateFromFilename("ISSU123 2019", FileItem.Type.Issue));
+        assertEquals("#123 2019", Utils.guessDateFromFilename("4 ISSUE123 2019", FileItem.Type.Issue));
+        assertEquals("#123 2019", Utils.guessDateFromFilename("123 ISSU456 2019", FileItem.Type.Issue));
     }
 
     private String helperTestFuzzyIndexOf(String str, String match) {

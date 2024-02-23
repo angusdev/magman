@@ -209,18 +209,12 @@ public class Utils {
                     year = new int[] { i, Integer.parseInt(s) };
                 }
             }
-            else if (s.matches("^\\d{4}$")) {
-                // Aug 0511, means 5-Aug to 11-Aug
-                final int num = Integer.parseInt(s.substring(0, 2));
-                if (num >= 1 && num <= 31) {
-                    day.add(new int[] { i, num, 0 });
-                }
-            }
             else if ("CHRISTMAS".equals(s) || "XMAS".equals(s) || "HOLIDAY".equals(s)) {
                 isXmas = true;
             }
-            else if (s.matches("^ISSUES?$")) {
+            else if (s.matches("^I(SSUES?)?$")) {
                 if (i < splited.length - 1 && splited[i + 1].matches("^\\d+$")) {
+                    // better match for issue number
                     issue = new int[] { i + 1, Integer.parseInt(splited[i + 1]) };
                 }
             }
@@ -235,36 +229,50 @@ public class Utils {
                 else if (QUARTER_NAME.containsKey(s)) {
                     quarter.add(new int[] { i, QUARTER_NAME.get(s), 1 });
                 }
-                else if (s.matches("^\\d{1,2}$")) {
-                    final int value = Integer.parseInt(s);
-
-                    // yyyy 12
-                    // yyyy 31
-                    // 12 xx yyyy
-                    // 31 xx yyyy
-                    if (value > 12 && value <= 31) {
-                        // > 12, must be day
-                        day.add(new int[] { i, value });
+                else if (s.matches("^\\d+$")) {
+                    if (issue == null) {
+                        // can be issue number
+                        issue = new int[] { i + 1, Integer.parseInt(s) };
                     }
-                    else if (value >= 1 && value <= 12) {
-                        if (year != null) {
-                            if (month.size() == 0) {
-                                // yyyy and no month, this should be month
-                                month.add(new int[] { i, value, 0 });
-                            }
-                            else {
-                                // yyyy mm, this should be day
-                                day.add(new int[] { i, value, 0 });
-                            }
+
+                    if (s.matches("^\\d{4}$")) {
+                        // Aug 0511, means 5-Aug to 11-Aug
+                        final int num = Integer.parseInt(s.substring(0, 2));
+                        if (num >= 1 && num <= 31) {
+                            day.add(new int[] { i, num, 0 });
                         }
-                        else {
-                            if (month.size() > 0) {
-                                // no year, but has month, e.g. Feb (12) 2019
-                                day.add(new int[] { i, value });
+                    }
+                    else if (s.matches("^\\d{1,2}$")) {
+                        final int value = Integer.parseInt(s);
+
+                        // yyyy 12
+                        // yyyy 31
+                        // 12 xx yyyy
+                        // 31 xx yyyy
+                        if (value > 12 && value <= 31) {
+                            // > 12, must be day
+                            day.add(new int[] { i, value });
+                        }
+                        else if (value >= 1 && value <= 12) {
+                            if (year != null) {
+                                if (month.size() == 0) {
+                                    // yyyy and no month, this should be month
+                                    month.add(new int[] { i, value, 0 });
+                                }
+                                else {
+                                    // yyyy mm, this should be day
+                                    day.add(new int[] { i, value, 0 });
+                                }
                             }
                             else {
-                                // no year, this can be day or month, e.g. (12) 2019, or (11) 10 2019
-                                monthOrDay.add(new int[] { i, value });
+                                if (month.size() > 0) {
+                                    // no year, but has month, e.g. Feb (12) 2019
+                                    day.add(new int[] { i, value });
+                                }
+                                else {
+                                    // no year, this can be day or month, e.g. (12) 2019, or (11) 10 2019
+                                    monthOrDay.add(new int[] { i, value });
+                                }
                             }
                         }
                     }
