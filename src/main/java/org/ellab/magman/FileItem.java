@@ -99,9 +99,17 @@ public class FileItem implements Comparable<FileItem> {
         fi.missing = true;
 
         if (Type.Monthly.equals(fi.type)) {
-            fi.dateStr = DateTimeFormatter.ofPattern("yyyyMM").format(fi.dateFrom);
+            var yyyyMM = DateTimeFormatter.ofPattern("yyyyMM");
+            var mm = DateTimeFormatter.ofPattern("MM");
+            var yyyy = DateTimeFormatter.ofPattern("yyyy");
+            fi.dateStr = yyyyMM.format(fi.dateFrom);
             if (!fi.dateFrom.equals(fi.dateTo)) {
-                fi.dateStr += "-" + DateTimeFormatter.ofPattern("MM").format(fi.dateTo);
+                if (yyyy.format(fi.dateFrom).equals(yyyy.format(fi.dateTo))) {
+                    fi.dateStr += "-" + mm.format(fi.dateTo);
+                }
+                else {
+                    fi.dateStr += "-" + yyyyMM.format(fi.dateTo);
+                }
             }
         }
         else if (Type.Weekly.equals(fi.type) || Type.Biweekly.equals(fi.type)) {

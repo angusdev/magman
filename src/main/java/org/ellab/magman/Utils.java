@@ -4,6 +4,8 @@ import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -348,7 +350,15 @@ public class Utils {
                 d = monthOrDay.size() > 0 ? monthOrDay.get(0)[1] : 0;
             }
             if (d > 0) {
-                return year[1] + (m < 10 ? "0" : "") + m + (d < 10 ? "0" : "") + d;
+                if (type.equals(FileItem.Type.Weekly)) {
+                    return year[1] + (m < 10 ? "0" : "") + m + (d < 10 ? "0" : "") + d;
+                }
+                else if (type.equals(FileItem.Type.Biweekly)) {
+                    LocalDate fromDate = LocalDate.of(year[1], m, d);
+                    LocalDate toDate = fromDate.plusDays(7);
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+                    return fromDate.format(formatter) + "-" + toDate.format(formatter);
+                }
             }
         }
 

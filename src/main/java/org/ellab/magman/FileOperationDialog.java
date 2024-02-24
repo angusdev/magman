@@ -80,6 +80,12 @@ public class FileOperationDialog extends Dialog {
             this.path = path;
             this.mc = mc;
             this.oritype = fi != null ? fi.getType() : null;
+            if (FileItem.Type.Weekly.equals(this.oritype)) {
+                Map<FileItem.Type, FileItems> groups = mc.group(fi.getGroup());
+                if (groups.get(FileItem.Type.Biweekly) != null && groups.get(FileItem.Type.Weekly) == null) {
+                    this.oritype = FileItem.Type.Biweekly;
+                }
+            }
             this.type = this.oritype;
             this.src = src;
             this.oridest = fi != null ? fi.getFilename() : null;
@@ -410,7 +416,7 @@ public class FileOperationDialog extends Dialog {
             // don't pack last
             table.getColumn(i).pack();
         }
-        
+
         if (table.getItemCount() == 1) {
             table.setSelection(0);
             table.notifyListeners(SWT.Selection, new Event());
@@ -491,8 +497,11 @@ public class FileOperationDialog extends Dialog {
             else if (item.type == null) {
                 continue;
             }
-            else if (FileItem.Type.Weekly.equals(item.type) || FileItem.Type.Biweekly.equals(item.type)) {
-                processWeekly(ti, action, offset);
+            else if (FileItem.Type.Weekly.equals(item.type)) {
+                processWeekly(ti, action, offset, 1);
+            }
+            else if (FileItem.Type.Biweekly.equals(item.type)) {
+                processWeekly(ti, action, offset, 2);
             }
             else if (FileItem.Type.Monthly.equals(item.type)) {
                 processMonthly(ti, action, offset);
@@ -517,7 +526,7 @@ public class FileOperationDialog extends Dialog {
         }
     }
 
-    private void processWeekly(TableItem ti, int action, Integer offset) {
+    private void processWeekly(TableItem ti, int action, Integer offset, int week) {
         final Pattern patternWeekly = Pattern
                 .compile("(.*\\s)(\\d{4})(\\d{2})(\\d{2})(\\-(\\d{4})(\\d{2})(\\d{2}))?(\\.[^\\.]+)$");
         Item it = (Item) ti.getData();
@@ -537,7 +546,7 @@ public class FileOperationDialog extends Dialog {
                 c1.set(Calendar.YEAR, y1);
                 c1.set(Calendar.MONTH, m1 - 1);
                 c1.set(Calendar.DAY_OF_MONTH, d1);
-                c1.add(Calendar.DAY_OF_MONTH, offset * 7);
+                c1.add(Calendar.DAY_OF_MONTH, offset * 7 * week);
 
                 Calendar c2 = null;
                 if (y2 > 0) {
@@ -545,7 +554,7 @@ public class FileOperationDialog extends Dialog {
                     c2.set(Calendar.YEAR, y2);
                     c2.set(Calendar.MONTH, m2 - 1);
                     c2.set(Calendar.DAY_OF_MONTH, d2);
-                    c2.add(Calendar.DAY_OF_MONTH, offset * 7);
+                    c2.add(Calendar.DAY_OF_MONTH, offset * 7 * week);
                 }
 
                 it.dest = prefix + calendarToYYYYMMDD(c1) + (c2 != null ? ("-" + calendarToYYYYMMDD(c2)) : "") + ext;

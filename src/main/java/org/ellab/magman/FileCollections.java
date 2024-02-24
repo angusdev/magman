@@ -189,6 +189,9 @@ public class FileCollections {
 
     private void analysis(MagazineCollection mc) {
         Set<FileItem> missing = new HashSet<>();
+        var asjustWeeklyToBiweekly = new Object() {
+            boolean ordinal = false;
+        };
 
         mc.groupMap.forEach((group, types) -> {
             types.forEach((type, fis) -> {
@@ -211,7 +214,7 @@ public class FileCollections {
                             fi.addProblem(FileItem.Problem.WrongDow, false);
                         }
                         if (prev != null) {
-                            long days = ChronoUnit.DAYS.between(fi.getDateFrom(), prev.getDateFrom());
+                            long days = ChronoUnit.DAYS.between(prev.getDateFrom(), fi.getDateFrom());
                             daysList.add(days);
                         }
                         prev = fi;
@@ -225,6 +228,7 @@ public class FileCollections {
                         fis.getFileItems().forEach(fi -> {
                             fi.setType(FileItem.Type.Biweekly);
                         });
+                        asjustWeeklyToBiweekly.ordinal = true;
                     }
                 }
 
@@ -246,9 +250,9 @@ public class FileCollections {
                         else if (FileItem.Type.Weekly.equals(type)) {
                             LocalDate calExpected = prev.getDateTo();
                             LocalDate calThis = fi.getDateFrom();
-                            calExpected = calExpected.plusDays(FileItem.Type.Biweekly.equals(fi.getType()) ? 14 : 7);
+                            calExpected = calExpected.plusDays(7);
                             if (calThis.isAfter(calExpected)) {
-                                calThis = calThis.minusDays(FileItem.Type.Biweekly.equals(fi.getType()) ? 14 : 7);
+                                calThis = calThis.minusDays(7);
                                 FileItem n = FileItem.createMissingFileItem(prev, calExpected, calThis);
                                 missing.add(n);
                             }
@@ -285,6 +289,11 @@ public class FileCollections {
                     prev = fi;
                 }
             });
+
+            if (asjustWeeklyToBiweekly.ordinal) {
+                types.put(FileItem.Type.Biweekly, types.get(FileItem.Type.Weekly));
+                types.remove(FileItem.Type.Weekly);
+            }
         });
 
         missing.forEach(m -> add(m));
