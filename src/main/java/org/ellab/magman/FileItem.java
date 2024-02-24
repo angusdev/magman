@@ -240,8 +240,6 @@ public class FileItem implements Comparable<FileItem> {
             // for (int i = 0; m.matches() && i <= m.groupCount(); i++) {
             // System.out.println(i + " - " + m.group(i));
             // }
-            valid = true;
-            type = Type.Weekly;
             group = m.group(2) != null ? m.group(2) : "";
             dateStr = m.group(3);
 
@@ -263,6 +261,8 @@ public class FileItem implements Comparable<FileItem> {
             try {
                 dateFrom = LocalDate.of(y1, m1, d1);
                 dateTo = LocalDate.of(y2, m2, d2);
+                valid = true;
+                type = Type.Weekly;
             }
             catch (DateTimeException ex) {
                 dateFrom = null;
