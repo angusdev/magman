@@ -15,7 +15,7 @@ public class PDFPreview implements Closeable {
     public static final int PREV_PAGE = -2;
     public static final int NEXT_PAGE = -3;
 
-    private int dpi = 300;
+    private int dpi = 100;
     private PDDocument doc;
     private PDFRenderer pdfRenderer;
     private int totalPages;

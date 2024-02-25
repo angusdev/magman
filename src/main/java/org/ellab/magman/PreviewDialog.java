@@ -218,7 +218,7 @@ public class PreviewDialog extends Dialog {
         cboDpi.setVisibleItemCount(4);
         cboDpi.setItems(new String[] { "100", "300", "600", "1200" });
         cboDpi.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
-        cboDpi.select(1);
+        cboDpi.select(0);
 
         Label lblSpace2 = new Label(compositeControl, SWT.NONE);
         lblSpace2.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false, 1, 1));
