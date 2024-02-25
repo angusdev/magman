@@ -342,6 +342,18 @@ public class SwtMain {
                                 ex.printStackTrace();
                             }
                         }
+                        else {
+                            try {
+                                String path = fi.getFilePath();
+                                if (FileCollections.isSupportedFilename(path)) {
+                                    new PreviewDialog(shell, SWT.APPLICATION_MODAL | SWT.TITLE | SWT.RESIZE | SWT.CLOSE
+                                            | SWT.MAX | SWT.MIN).open(path);
+                                }
+                            }
+                            catch (IOException ex) {
+                                SwtUtils.errorBox(shell, ex);
+                            }
+                        }
                     }
                 }
             }
