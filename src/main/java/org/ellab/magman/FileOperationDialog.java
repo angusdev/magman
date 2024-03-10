@@ -5,11 +5,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Comparator;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -479,8 +479,8 @@ public class FileOperationDialog extends Dialog {
         }
     }
 
-    private static String calendarToYYYYMMDD(Calendar c) {
-        return c.get(Calendar.YEAR) + padzero(c.get(Calendar.MONTH) + 1) + padzero(c.get(Calendar.DAY_OF_MONTH));
+    private static String localDateToYYYYMMDD(LocalDate d) {
+        return DateTimeFormatter.ofPattern("yyyyMMdd").format(d);
     }
 
     private void processDate(int action, Integer offset) {
@@ -542,22 +542,10 @@ public class FileOperationDialog extends Dialog {
             final String ext = m.group(9);
 
             if (action == OPER_PREV_NEXT) {
-                Calendar c1 = GregorianCalendar.getInstance();
-                c1.set(Calendar.YEAR, y1);
-                c1.set(Calendar.MONTH, m1 - 1);
-                c1.set(Calendar.DAY_OF_MONTH, d1);
-                c1.add(Calendar.DAY_OF_MONTH, offset * 7 * week);
-
-                Calendar c2 = null;
-                if (y2 > 0) {
-                    c2 = GregorianCalendar.getInstance();
-                    c2.set(Calendar.YEAR, y2);
-                    c2.set(Calendar.MONTH, m2 - 1);
-                    c2.set(Calendar.DAY_OF_MONTH, d2);
-                    c2.add(Calendar.DAY_OF_MONTH, offset * 7 * week);
-                }
-
-                it.dest = prefix + calendarToYYYYMMDD(c1) + (c2 != null ? ("-" + calendarToYYYYMMDD(c2)) : "") + ext;
+                LocalDate dt1 = LocalDate.of(y1, m1, d1).plusDays(offset * 7 * week);
+                LocalDate dt2 = y2 > 0 ? LocalDate.of(y2, m2, d2).plusDays(offset * 7 * week) : null;
+                it.dest = prefix + localDateToYYYYMMDD(dt1) + (dt2 != null ? ("-" + localDateToYYYYMMDD(dt2)) : "")
+                        + ext;
             }
             else if (action == OPER_EXTEND_REDUCE) {
                 if (y2 <= 0) {
@@ -569,21 +557,13 @@ public class FileOperationDialog extends Dialog {
                     m2 = m1;
                     d2 = d1;
                 }
-                Calendar c1 = GregorianCalendar.getInstance();
-                c1.set(Calendar.YEAR, y1);
-                c1.set(Calendar.MONTH, m1 - 1);
-                c1.set(Calendar.DAY_OF_MONTH, d1);
-                Calendar c2 = GregorianCalendar.getInstance();
-                c2.set(Calendar.YEAR, y2);
-                c2.set(Calendar.MONTH, m2 - 1);
-                c2.set(Calendar.DAY_OF_MONTH, d2);
-                c2.add(Calendar.DAY_OF_MONTH, offset * 7);
-
-                if (c2.compareTo(c1) > 0) {
-                    it.dest = prefix + calendarToYYYYMMDD(c1) + "-" + calendarToYYYYMMDD(c2) + ext;
+                LocalDate dt1 = LocalDate.of(y1, m1, d1);
+                LocalDate dt2 = LocalDate.of(y2, m2, d2).plusDays(offset * 7);
+                if (dt2.compareTo(dt1) > 0) {
+                    it.dest = prefix + localDateToYYYYMMDD(dt1) + "-" + localDateToYYYYMMDD(dt2) + ext;
                 }
                 else {
-                    it.dest = prefix + calendarToYYYYMMDD(c1) + ext;
+                    it.dest = prefix + localDateToYYYYMMDD(dt1) + ext;
                 }
             }
         }
