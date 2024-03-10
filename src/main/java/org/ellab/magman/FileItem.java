@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -58,6 +59,7 @@ public class FileItem implements Comparable<FileItem> {
     private LocalDate dateFrom;
     private LocalDate dateTo;
     private Type type;
+    private int missingCount;
     private Set<Problem> problems = new TreeSet<>();
 
     private FileItem() {
@@ -111,12 +113,18 @@ public class FileItem implements Comparable<FileItem> {
                     fi.dateStr += "-" + yyyyMM.format(fi.dateTo);
                 }
             }
+            int monthFrom = fi.dateFrom.getYear() * 12 + fi.dateFrom.getMonthValue();
+            int monthTo = fi.dateTo.getYear() * 12 + fi.dateTo.getMonthValue();
+            fi.missingCount = monthTo - monthFrom + 1;
         }
         else if (Type.Weekly.equals(fi.type) || Type.Biweekly.equals(fi.type)) {
             fi.dateStr = DateTimeFormatter.ofPattern("yyyyMMdd").format(fi.dateFrom);
             if (!fi.dateFrom.equals(fi.dateTo)) {
                 fi.dateStr += "-" + DateTimeFormatter.ofPattern("yyyyMMdd").format(fi.dateTo);
             }
+            long daysDiff = ChronoUnit.DAYS.between(fi.dateFrom, fi.dateTo);
+            long weekDiff = daysDiff / 7 + 1;
+            fi.missingCount = Type.Weekly.equals(fi.type) ? (int) weekDiff : (int) Math.ceil(weekDiff / 2.0);
         }
         else if (Type.Quarterly.equals(fi.type)) {
             fi.dateStr = fi.dateFrom.getYear() + "Q" + ((fi.dateFrom.getMonthValue() / 3) + 1);
@@ -463,6 +471,10 @@ public class FileItem implements Comparable<FileItem> {
 
     public Type getType() {
         return type;
+    }
+
+    public int getMissingCount() {
+        return missingCount;
     }
 
     public Set<Problem> getProblems() {

@@ -1059,6 +1059,9 @@ public class SwtMain {
                                 else if (fi.isMissing()) {
                                     t.setForeground(new Color(display, new RGB(255, 0, 0)));
                                     t.setText(3, "Missing");
+                                    if (fi.getMissingCount() > 1) {
+                                        t.setText(fi.getFilename() + " (" + fi.getMissingCount() + ")");
+                                    }
                                 }
                             }
                             else if (fi.isAlien()) {
